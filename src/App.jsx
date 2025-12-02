@@ -5,6 +5,7 @@ import BuyerHome from "./components/BuyerHome";
 import SellerDashboard from "./components/SellerDashboard";
 import HaulerDashboard from "./components/HaulerDashboard";
 import ProfileScreen from "./components/ProfileScreen";
+import AIAssistant from "./components/AIAssistant";
 import BottomNav from "./components/BottomNav";
 
 function App() {
@@ -25,6 +26,8 @@ function App() {
         return <SellerDashboard />;
       case "haul":
         return <HaulerDashboard />;
+      case "ai":
+        return <AIAssistant />;
       case "profile":
         return <ProfileScreen />;
       default:

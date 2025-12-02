@@ -36,6 +36,12 @@ const BottomNav = ({ activeTab, onChangeTab }) => {
         onChangeTab={onChangeTab}
       />
       <NavItem
+        label="AI"
+        tabId="ai"
+        activeTab={activeTab}
+        onChangeTab={onChangeTab}
+      />
+      <NavItem
         label="Profile"
         tabId="profile"
         activeTab={activeTab}
