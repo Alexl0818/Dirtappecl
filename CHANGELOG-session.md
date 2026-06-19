@@ -30,8 +30,10 @@ DELETE endpoints for the "clear" actions. Consumers updated to async
   with correct per-user scoping. Console clean.
 - The 3-account test caught a real bug: awarded opportunities dropped out of the
   hauler's view — fixed so haulers still see opps they've bid on.
-- **Only `messages` remains on localStorage** (minor one-way feature; server
-  endpoints exist, client swap is a small follow-up).
+- **Messages now on the backend too** (loaded per-thread on demand). Verified
+  live: a seller's message persists server-side and reloads from the server when
+  the thread is reopened. **No data store uses localStorage anymore** — only the
+  session token does.
 - Follow-ups: real password hashing (prototype stores plaintext server-side) and
   tightening a couple of per-resource write checks.
 

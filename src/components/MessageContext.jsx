@@ -4,50 +4,53 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import { useAuth } from "./AuthContext";
+import { api } from "../lib/api";
 
 const MessageContext = createContext();
 
-const LS_KEY = "dirtapp_messages";
+// Messages now live on the server. Threads are loaded on demand (per thread id)
+// rather than all at once. `threads` is a map of threadId -> messages[].
 
 export function MessageProvider({ children }) {
+  const { user } = useAuth();
   const [threads, setThreads] = useState({});
-  const [ready, setReady] = useState(false);
 
-  // Load threads from localStorage on mount
+  // Drop cached threads when the signed-in user changes.
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(LS_KEY);
-      const parsed = JSON.parse(raw || "{}");
-      setThreads(parsed && typeof parsed === "object" ? parsed : {});
-    } catch (e) {
-      console.error("MessageContext: load failed", e);
-      setThreads({});
-    }
-    setReady(true);
-  }, []);
+    setThreads({});
+  }, [user]);
 
-  // Persist threads (after the initial load, so we never clobber stored data).
-  useEffect(() => {
-    if (!ready) return;
+  async function loadThread(threadId) {
+    if (!threadId) return;
     try {
-      localStorage.setItem(LS_KEY, JSON.stringify(threads));
-    } catch (e) {
-      console.error("MessageContext: save failed", e);
-    }
-  }, [threads, ready]);
-
-  const sendMessage = (inquiryId, message) => {
-    setThreads((prev) => {
-      const existing = prev[inquiryId] || [];
-      return {
+      const msgs = await api.get(
+        `/messages?threadId=${encodeURIComponent(threadId)}`
+      );
+      setThreads((prev) => ({
         ...prev,
-        [inquiryId]: [...existing, { id: Date.now().toString(), ...message }],
-      };
+        [threadId]: Array.isArray(msgs) ? msgs : [],
+      }));
+    } catch (e) {
+      console.error("MessageContext: loadThread failed", e.message);
+    }
+  }
+
+  async function sendMessage(threadId, message) {
+    const created = await api.post("/messages", {
+      threadId,
+      fromRole: message.from || message.fromRole || "buyer",
+      text: message.text,
     });
-  };
+    setThreads((prev) => ({
+      ...prev,
+      [threadId]: [...(prev[threadId] || []), created],
+    }));
+    return created;
+  }
 
   return (
-    <MessageContext.Provider value={{ threads, sendMessage }}>
+    <MessageContext.Provider value={{ threads, sendMessage, loadThread }}>
       {children}
     </MessageContext.Provider>
   );

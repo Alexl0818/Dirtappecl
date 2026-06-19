@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import GlassCard from "./GlassCard";
 import { useMessages } from "./MessageContext";
@@ -8,12 +8,18 @@ export default function MessageThread() {
   const { state } = useLocation();
   const inquiry = state?.inquiry;
 
-  const { threads, sendMessage } = useMessages();
+  const { threads, sendMessage, loadThread } = useMessages();
   const inquiryId = inquiry?.id || "TEMP-THREAD";
 
   const [draft, setDraft] = useState("");
 
   const messages = threads[inquiryId] || [];
+
+  // Load this thread's messages from the server when it opens.
+  useEffect(() => {
+    if (inquiry?.id) loadThread(inquiry.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inquiry?.id]);
 
   const handleSend = (e) => {
     e.preventDefault();
@@ -22,7 +28,6 @@ export default function MessageThread() {
     sendMessage(inquiryId, {
       from: "seller",
       text: draft.trim(),
-      sentAt: new Date().toISOString(),
     });
 
     setDraft("");
@@ -114,14 +119,14 @@ export default function MessageThread() {
             <div
               key={m.id}
               style={{
-                alignSelf: m.from === "seller" ? "flex-end" : "flex-start",
+                alignSelf: m.fromRole === "seller" ? "flex-end" : "flex-start",
                 maxWidth: "80%",
                 padding: "8px 10px",
                 borderRadius: 12,
                 fontSize: 13,
                 lineHeight: "18px",
                 background:
-                  m.from === "seller" ? "#3498db" : "#ffffff15",
+                  m.fromRole === "seller" ? "#3498db" : "#ffffff15",
                 color: "#fff",
               }}
             >
