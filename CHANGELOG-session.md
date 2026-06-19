@@ -22,6 +22,12 @@ for him. Done & **verified live**:
   No env key required anymore. Data model unchanged (`lat`/`lng`/`geoFormatted`), so
   Google can be swapped back later if ever wanted.
 
+## 📍 Detail-page location maps (new)
+
+The buyer listing-details page and the request-details page now show a small map
+of the location (reusing `RouteMiniMap` with a single point). Only render when the
+record has coordinates. Verified live (listing + request both show a marker).
+
 ## 🛣️ Pickup→dropoff route mini-map (new)
 
 The hauler opportunity page now shows a small Leaflet map with pickup + dropoff

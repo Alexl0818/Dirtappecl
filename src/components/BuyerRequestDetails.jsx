@@ -1,5 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import RouteMiniMap from "./RouteMiniMap";
+import { hasCoords } from "../lib/maps";
 
 function formatDate(iso) {
   if (!iso) return "Not set";
@@ -74,6 +76,22 @@ export default function BuyerRequestDetails() {
         <Row label="Linked listing" value={request.listingId} />
         <Row label="Submitted" value={formatDate(request.createdAt)} />
       </div>
+
+      {hasCoords(request) ? (
+        <div style={{ ...cardStyle, marginTop: 16 }}>
+          <div style={labelStyle}>Delivery location</div>
+          <div style={{ marginTop: 8 }}>
+            <RouteMiniMap
+              pickup={{
+                lat: request.lat,
+                lng: request.lng,
+                label: request.address,
+              }}
+              height={200}
+            />
+          </div>
+        </div>
+      ) : null}
 
       <div style={{ marginTop: 20, display: "flex", gap: 10 }}>
         <button onClick={() => navigate("/buyer/requests")}>

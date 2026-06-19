@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import GlassCard from "./GlassCard";
 import BottomNav from "./BottomNav";
 import { useSellerListings } from "./SellerListingContext";
+import RouteMiniMap from "./RouteMiniMap";
+import { hasCoords } from "../lib/maps";
 import "./BuyerListingDetails.css";
 
 function formatDate(iso) {
@@ -115,6 +117,20 @@ function BuyerListingDetails() {
             Listed: {formatDate(listing.createdAt)}
           </p>
         </GlassCard>
+
+        {hasCoords(listing) ? (
+          <GlassCard className="buyer-details-card">
+            <p className="buyer-details-label">Location</p>
+            <RouteMiniMap
+              pickup={{
+                lat: listing.lat,
+                lng: listing.lng,
+                label: listing.location,
+              }}
+              height={200}
+            />
+          </GlassCard>
+        ) : null}
 
         <GlassCard className="buyer-details-card buyer-details-actions-card">
           <div className="buyer-details-actions">
