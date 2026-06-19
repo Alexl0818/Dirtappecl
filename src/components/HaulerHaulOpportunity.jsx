@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useHaulBid } from "./HaulBidContext.jsx";
+import { distanceMiles } from "../lib/maps";
 
 export default function HaulerHaulOpportunity() {
   const { oppId } = useParams();
@@ -92,6 +93,17 @@ export default function HaulerHaulOpportunity() {
               <div>
                 <strong>Dropoff:</strong> {opp.dropoff || opp.address || "—"}
               </div>
+              {(() => {
+                const dist = distanceMiles(
+                  { lat: opp.pickupLat, lng: opp.pickupLng },
+                  { lat: opp.dropoffLat, lng: opp.dropoffLng }
+                );
+                return dist != null ? (
+                  <div style={{ marginTop: 4, color: "rgb(74,222,128)", fontWeight: 600 }}>
+                    Haul distance: ~{Math.round(dist)} mi
+                  </div>
+                ) : null;
+              })()}
             </div>
 
             {isLocked && (

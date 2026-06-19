@@ -22,6 +22,14 @@ for him. Done & **verified live**:
   No env key required anymore. Data model unchanged (`lat`/`lng`/`geoFormatted`), so
   Google can be swapped back later if ever wanted.
 
+## 📏 Distance-aware haul opportunities (new)
+
+Builds on the geo data: haulers now see **haul distance** (pickup→dropoff), the key
+driver of their bid. Haversine helper in `src/lib/maps.js`; opportunities capture
+pickup/dropoff coords at accept time; distance shows on the hauler dashboard cards
+and the opportunity detail page. Verified live: Raleigh→Charlotte listing/request
+geocoded, accepted, hauler dashboard shows "~130 mi haul". Console clean.
+
 ## 🧪 Verified live this session (full coverage)
 
 Complete loop, exercised in the running app with the auth guard + all fixes in place:

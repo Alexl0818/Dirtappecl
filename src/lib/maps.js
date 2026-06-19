@@ -51,3 +51,20 @@ export function hasCoords(rec) {
     !Number.isNaN(rec.lng)
   );
 }
+
+// Great-circle distance in miles between two {lat,lng} points. Returns null if
+// either point lacks coordinates. This is "as the crow flies" — a reasonable
+// proxy for haul distance until real routing is added.
+export function distanceMiles(a, b) {
+  if (!hasCoords(a) || !hasCoords(b)) return null;
+  const R = 3958.8; // Earth radius in miles
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.asin(Math.sqrt(h));
+}

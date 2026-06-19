@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import GlassCard from "./GlassCard";
 import BottomNav from "./BottomNav";
 import { useHaulBids } from "./HaulBidContext";
+import { distanceMiles } from "../lib/maps";
 
 export default function HaulerDashboard() {
   const navigate = useNavigate();
@@ -42,6 +43,10 @@ export default function HaulerDashboard() {
               const dropoff = o?.dropoffAddress ?? "TBD";
               const createdAt = o?.createdAt ? new Date(o.createdAt).toLocaleString() : "";
               const status = o?.status ?? "open";
+              const dist = distanceMiles(
+                { lat: o?.pickupLat, lng: o?.pickupLng },
+                { lat: o?.dropoffLat, lng: o?.dropoffLng }
+              );
 
               return (
                 <GlassCard key={id} className="dashboard-card">
@@ -65,6 +70,11 @@ export default function HaulerDashboard() {
                     <div style={{ marginTop: 6 }}>
                       <strong>Dropoff:</strong> {dropoff}
                     </div>
+                    {dist != null ? (
+                      <div style={{ marginTop: 6, color: "rgb(74,222,128)", fontWeight: 600 }}>
+                        ~{Math.round(dist)} mi haul
+                      </div>
+                    ) : null}
                     {createdAt ? (
                       <div style={{ marginTop: 8, opacity: 0.75, fontSize: "0.78rem" }}>
                         Created: {createdAt}

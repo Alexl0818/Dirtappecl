@@ -99,6 +99,11 @@ export default function SellerInquiryDetails() {
       pickupLocation: listing?.location || "",
       dropoff: request.address || "",
       dropoffAddress: request.address || "",
+      // Coordinates (when geocoded) so haulers can see the haul distance.
+      pickupLat: listing?.lat,
+      pickupLng: listing?.lng,
+      dropoffLat: request.lat,
+      dropoffLng: request.lng,
       notes: request.notes || "",
     });
   };
