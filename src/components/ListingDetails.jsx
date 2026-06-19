@@ -4,13 +4,18 @@ import GlassCard from "./GlassCard";
 import BottomNav from "./BottomNav";
 import { useSellerListings } from "./SellerListingContext";
 import { useInquiry } from "./InquiryContext";
+import { useAuth } from "./AuthContext";
 
 export default function ListingDetails() {
   const navigate = useNavigate();
   const seller = useSellerListings();
   const { requests } = useInquiry();
+  const { user } = useAuth();
 
-  const listings = Array.isArray(seller.listings) ? seller.listings : [];
+  // The context holds everyone's listings (for browsing); show only mine here.
+  const listings = (Array.isArray(seller.listings) ? seller.listings : []).filter(
+    (l) => !l.sellerEmail || l.sellerEmail === user?.email
+  );
 
   // Count buyer requests per listing so sellers see where the activity is.
   const requestCounts = useMemo(() => {

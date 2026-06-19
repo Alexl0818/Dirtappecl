@@ -1,5 +1,29 @@
 # Session Changelog — Hardening & Geo Map
 
+## 🚀 REAL BACKEND — Phase 1 (auth + listings) DONE & multi-user verified
+
+The app is no longer single-device. Extended the existing Express server into a
+real backend with a persistent JSON datastore (`db.js`) and token auth.
+
+- `server.js`: REST API for auth/profile, listings, requests, opportunities,
+  bids (+ atomic award), messages. Owner-scoped reads. Sessions via Bearer token.
+  Passwords never returned to the client. Runs on :3001; Vite proxies `/api`.
+- `src/lib/api.js`: client with token management.
+- `AuthContext` + `SellerListingContext` rewritten to use the backend (same hook
+  surface, so screens barely changed). Listing screens scope to the current
+  seller; buyers browse all.
+- **Verified live multi-user:** seller@site.com created a Boone, NC listing →
+  persisted server-side (`data.json`, geocoded) → a *separate* buyer@site.com
+  account in a fresh session saw it on Browse. Console clean.
+- Data store (`data.json`) is gitignored.
+
+**Phase 2 (next):** move requests, opportunities, bids, messages to the backend
+too (currently still localStorage), then the whole buyer→seller→hauler loop is
+multi-user. Note: real password hashing + per-resource auth tightening is a
+follow-up (prototype stores plaintext passwords server-side).
+
+
+
 App: **SoilConnect** (Site-Sync) — soil marketplace (buyer ↔ seller ↔ hauler).
 Run goal (per Alex): make it a solid, bug-free app + real Google Maps geo map + simulated login. No payments (subscription model). No backend yet.
 

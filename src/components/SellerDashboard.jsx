@@ -6,26 +6,30 @@ import BottomNav from "./BottomNav";
 import { useSellerListings } from "./SellerListingContext";
 import { useInquiry } from "./InquiryContext";
 import { useHaulBids } from "./HaulBidContext";
+import { useAuth } from "./AuthContext";
 
 export default function SellerDashboard() {
   const navigate = useNavigate();
   const { listings } = useSellerListings();
   const { requests } = useInquiry();
   const { opportunities } = useHaulBids();
+  const { user } = useAuth();
 
   const stats = useMemo(() => {
-    const safeListings = Array.isArray(listings) ? listings : [];
+    const myListings = (Array.isArray(listings) ? listings : []).filter(
+      (l) => !l.sellerEmail || l.sellerEmail === user?.email
+    );
     const safeRequests = Array.isArray(requests) ? requests : [];
     const safeOpps = Array.isArray(opportunities) ? opportunities : [];
-    const listingIds = new Set(safeListings.map((l) => String(l?.id)));
+    const listingIds = new Set(myListings.map((l) => String(l?.id)));
     return {
-      active: safeListings.filter((l) => (l?.status ?? "active") === "active").length,
+      active: myListings.filter((l) => (l?.status ?? "active") === "active").length,
       requests: safeRequests.filter((r) => listingIds.has(String(r?.listingId))).length,
       awarded: safeOpps.filter(
         (o) => o?.status === "awarded" && listingIds.has(String(o?.listingId))
       ).length,
     };
-  }, [listings, requests, opportunities]);
+  }, [listings, requests, opportunities, user]);
 
   return (
     <div className="app-root">

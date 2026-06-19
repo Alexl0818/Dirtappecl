@@ -15,10 +15,10 @@ const LoginScreen = () => {
   const setField = (key) => (e) =>
     setForm((p) => ({ ...p, [key]: e.target.value }));
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     setError("");
     setSubmitting(true);
-    const result = login(form);
+    const result = await login(form);
     setSubmitting(false);
     if (!result.ok) {
       setError(result.error);

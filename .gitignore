@@ -130,3 +130,6 @@ dist
 .pnp.*
 # Replit local agent state (machine-specific)
 .local/
+
+# Local backend data store (JSON)
+data.json

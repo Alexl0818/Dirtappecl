@@ -5,26 +5,12 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { api, getToken, setToken } from "../lib/api";
 
 const AuthContext = createContext(null);
 
-const LS_USER = "dirtapp_auth_user"; // currently signed-in user
-const LS_ACCOUNTS = "dirtapp_accounts"; // all registered accounts (simulated)
-
-// NOTE: This is a SIMULATED auth layer backed by localStorage — no real
-// security, no hashing, single-device only. It exists so the entry flow is
-// validated and stable until the real backend lands.
-
-function readJSON(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw);
-    return parsed ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
+// Real auth backed by the server (token in localStorage). Replaces the previous
+// simulated localStorage-only layer; same hook surface so screens are unchanged.
 
 export function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
@@ -32,91 +18,71 @@ export function isValidEmail(email) {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [accounts, setAccounts] = useState({});
   const [ready, setReady] = useState(false);
 
-  // Load persisted auth state once on mount.
+  // Restore the session on boot: if we have a token, ask the server who we are.
   useEffect(() => {
-    setAccounts(readJSON(LS_ACCOUNTS, {}));
-    setUser(readJSON(LS_USER, null));
-    setReady(true);
+    let cancelled = false;
+    async function restore() {
+      if (!getToken()) {
+        if (!cancelled) setReady(true);
+        return;
+      }
+      try {
+        const { user: me } = await api.get("/auth/me");
+        if (!cancelled) setUser(me);
+      } catch {
+        setToken(null); // stale/invalid token
+      } finally {
+        if (!cancelled) setReady(true);
+      }
+    }
+    restore();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // Persist accounts + current user whenever they change (after load).
-  useEffect(() => {
-    if (!ready) return;
+  async function signup(form) {
     try {
-      localStorage.setItem(LS_ACCOUNTS, JSON.stringify(accounts));
+      const { user: me, token } = await api.post("/auth/signup", form);
+      setToken(token);
+      setUser(me);
+      return { ok: true };
     } catch (e) {
-      console.error("AuthContext: failed to save accounts", e);
+      return { ok: false, error: e.message };
     }
-  }, [accounts, ready]);
-
-  useEffect(() => {
-    if (!ready) return;
-    try {
-      if (user) localStorage.setItem(LS_USER, JSON.stringify(user));
-      else localStorage.removeItem(LS_USER);
-    } catch (e) {
-      console.error("AuthContext: failed to save user", e);
-    }
-  }, [user, ready]);
-
-  // Returns { ok: true } or { ok: false, error: "..." }
-  function signup({ name, email, password, company }) {
-    const cleanEmail = String(email || "").trim().toLowerCase();
-    if (!name || !name.trim()) return { ok: false, error: "Please enter your name." };
-    if (!isValidEmail(cleanEmail))
-      return { ok: false, error: "Please enter a valid email address." };
-    if (!password || password.length < 6)
-      return { ok: false, error: "Password must be at least 6 characters." };
-    if (accounts[cleanEmail])
-      return { ok: false, error: "An account with that email already exists." };
-
-    const account = {
-      name: name.trim(),
-      email: cleanEmail,
-      password, // simulated only — never do this with a real backend
-      company: (company || "").trim(),
-      createdAt: new Date().toISOString(),
-    };
-    setAccounts((prev) => ({ ...prev, [cleanEmail]: account }));
-
-    const { password: _pw, ...safeUser } = account;
-    setUser(safeUser);
-    return { ok: true };
   }
 
-  function login({ email, password }) {
-    const cleanEmail = String(email || "").trim().toLowerCase();
-    if (!isValidEmail(cleanEmail))
-      return { ok: false, error: "Please enter a valid email address." };
-    if (!password) return { ok: false, error: "Please enter your password." };
-
-    const account = accounts[cleanEmail];
-    if (!account || account.password !== password)
-      return { ok: false, error: "Email or password is incorrect." };
-
-    const { password: _pw, ...safeUser } = account;
-    setUser(safeUser);
-    return { ok: true };
+  async function login(form) {
+    try {
+      const { user: me, token } = await api.post("/auth/login", form);
+      setToken(token);
+      setUser(me);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
   }
 
-  function logout() {
+  async function logout() {
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      /* ignore network errors on logout */
+    }
+    setToken(null);
     setUser(null);
   }
 
-  // Update the signed-in user's profile (and the stored account).
-  function updateProfile(patch) {
-    if (!user) return { ok: false, error: "Not signed in." };
-    const next = { ...user, ...patch };
-    setUser(next);
-    setAccounts((prev) => {
-      const existing = prev[user.email];
-      if (!existing) return prev;
-      return { ...prev, [user.email]: { ...existing, ...patch } };
-    });
-    return { ok: true };
+  async function updateProfile(patch) {
+    try {
+      const { user: me } = await api.patch("/profile", patch);
+      setUser(me);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
   }
 
   const value = useMemo(
@@ -129,7 +95,7 @@ export function AuthProvider({ children }) {
       logout,
       updateProfile,
     }),
-    [user, ready, accounts]
+    [user, ready]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

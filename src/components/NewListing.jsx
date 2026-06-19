@@ -65,28 +65,27 @@ export default function NewListing() {
       notes: form.notes.trim(),
     };
 
-    // Best-effort geocode so the listing shows on the map. No-ops without a key.
     setSaving(true);
+    // Best-effort geocode so the listing shows on the map.
     const geo = await geocodeAddress(fields.location);
-    setSaving(false);
     if (geo) {
       fields.lat = geo.lat;
       fields.lng = geo.lng;
       fields.geoFormatted = geo.formatted;
     }
 
-    if (isEdit) {
-      seller.updateListing(listingId, fields);
-    } else {
-      seller.addListing({
-        id: `lst_${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        status: "active",
-        ...fields,
-      });
+    try {
+      if (isEdit) {
+        await seller.updateListing(listingId, fields);
+      } else {
+        await seller.addListing(fields);
+      }
+      navigate("/seller/listing");
+    } catch (e) {
+      setError(e.message || "Could not save the listing. Please try again.");
+    } finally {
+      setSaving(false);
     }
-
-    navigate("/seller/listing");
   }
 
   return (

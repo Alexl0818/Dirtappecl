@@ -43,8 +43,8 @@ const ProfileScreen = () => {
     setRoles((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleSave = () => {
-    updateProfile({
+  const handleSave = async () => {
+    await updateProfile({
       name: form.name,
       company: form.company,
       phone: form.phone,

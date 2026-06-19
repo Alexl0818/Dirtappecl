@@ -20,10 +20,10 @@ const SignupScreen = () => {
   const setField = (key) => (e) =>
     setForm((p) => ({ ...p, [key]: e.target.value }));
 
-  const handleCreateAccount = () => {
+  const handleCreateAccount = async () => {
     setError("");
     setSubmitting(true);
-    const result = signup(form);
+    const result = await signup(form);
     setSubmitting(false);
     if (!result.ok) {
       setError(result.error);
