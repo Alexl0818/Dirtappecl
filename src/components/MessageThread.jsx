@@ -10,6 +10,12 @@ export default function MessageThread() {
 
   const { threads, sendMessage, loadThread } = useMessages();
   const inquiryId = inquiry?.id || "TEMP-THREAD";
+  // Who am I in this thread? (defaults to seller for back-compat.)
+  const myRole = inquiry?.myRole || "seller";
+  const otherName =
+    inquiry?.otherName ||
+    inquiry?.buyerName ||
+    (myRole === "seller" ? "the buyer" : "the seller");
 
   const [draft, setDraft] = useState("");
 
@@ -24,7 +30,7 @@ export default function MessageThread() {
   const handleSend = (e) => {
     e.preventDefault();
     if (!draft.trim()) return;
-    sendMessage(inquiryId, { from: "seller", text: draft.trim() });
+    sendMessage(inquiryId, { from: myRole, text: draft.trim() });
     setDraft("");
   };
 
@@ -51,10 +57,8 @@ export default function MessageThread() {
       <main className="app-main">
         <div className="dashboard-header">
           <div>
-            <h2 className="section-title">Message buyer</h2>
-            <p className="section-subtitle">
-              You’re messaging {inquiry.buyerName || "the buyer"}.
-            </p>
+            <h2 className="section-title">Messages</h2>
+            <p className="section-subtitle">You’re messaging {otherName}.</p>
           </div>
         </div>
 
@@ -86,26 +90,28 @@ export default function MessageThread() {
               No messages yet. Start the conversation.
             </div>
           ) : (
-            messages.map((m) => (
-              <div
-                key={m.id}
-                style={{
-                  alignSelf: m.fromRole === "seller" ? "flex-end" : "flex-start",
-                  maxWidth: "80%",
-                  padding: "8px 11px",
-                  borderRadius: 14,
-                  fontSize: 13,
-                  lineHeight: "18px",
-                  background:
-                    m.fromRole === "seller"
+            messages.map((m) => {
+              const mine = m.fromRole === myRole;
+              return (
+                <div
+                  key={m.id}
+                  style={{
+                    alignSelf: mine ? "flex-end" : "flex-start",
+                    maxWidth: "80%",
+                    padding: "8px 11px",
+                    borderRadius: 14,
+                    fontSize: 13,
+                    lineHeight: "18px",
+                    background: mine
                       ? "linear-gradient(135deg, #22c55e, #16a34a)"
                       : "rgba(255,255,255,0.1)",
-                  color: m.fromRole === "seller" ? "#04210f" : "#f5f5f5",
-                }}
-              >
-                {m.text}
-              </div>
-            ))
+                    color: mine ? "#04210f" : "#f5f5f5",
+                  }}
+                >
+                  {m.text}
+                </div>
+              );
+            })
           )}
         </GlassCard>
 

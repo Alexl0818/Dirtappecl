@@ -11,6 +11,7 @@ const BottomNav = () => {
   let activeTab = "buy";
   if (path.startsWith("/seller")) activeTab = "sell";
   else if (path.startsWith("/hauler")) activeTab = "haul";
+  else if (path.startsWith("/messages")) activeTab = "msg";
   else if (path.startsWith("/profile")) activeTab = "profile";
   else if (path.startsWith("/buyer")) activeTab = "buy";
 
@@ -24,6 +25,9 @@ const BottomNav = () => {
         break;
       case "haul":
         navigate("/hauler/dashboard");
+        break;
+      case "msg":
+        navigate("/messages");
         break;
       case "profile":
         navigate("/profile");
@@ -65,6 +69,12 @@ const BottomNav = () => {
       <NavItem
         label="Haul"
         tabId="haul"
+        activeTab={activeTab}
+        onChangeTab={handleChangeTab}
+      />
+      <NavItem
+        label="Inbox"
+        tabId="msg"
         activeTab={activeTab}
         onChangeTab={handleChangeTab}
       />

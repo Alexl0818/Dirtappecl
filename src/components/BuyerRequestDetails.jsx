@@ -6,6 +6,7 @@ import RouteMiniMap from "./RouteMiniMap";
 import { hasCoords } from "../lib/maps";
 import { useInquiry } from "./InquiryContext";
 import { useHaulBids } from "./HaulBidContext";
+import { useSellerListings } from "./SellerListingContext";
 
 function formatDate(iso) {
   if (!iso) return "Not set";
@@ -59,11 +60,31 @@ export default function BuyerRequestDetails() {
   const { state } = useLocation();
   const { removeRequest } = useInquiry();
   const { opportunities } = useHaulBids();
+  const { listings } = useSellerListings();
   const request = state?.request;
   const opp =
     (Array.isArray(opportunities) ? opportunities : []).find(
       (o) => String(o.requestId) === String(request?.id)
     ) || null;
+  const listing = (Array.isArray(listings) ? listings : []).find(
+    (l) => String(l.id) === String(request?.listingId)
+  );
+  const sellerName = listing?.sellerCompany || listing?.sellerName || "the seller";
+
+  const messageSeller = () =>
+    navigate("/messages/thread", {
+      state: {
+        inquiry: {
+          id: request.id,
+          myRole: "buyer",
+          otherName: sellerName,
+          material: request.material,
+          quantity: request.quantity,
+          unit: request.unit,
+          location: request.address,
+        },
+      },
+    });
 
   const handleCancel = async () => {
     if (!request) return;
@@ -172,6 +193,11 @@ export default function BuyerRequestDetails() {
           >
             Back to requests
           </button>
+          {request.listingId ? (
+            <button className="btn btn-primary" onClick={messageSeller}>
+              Message seller
+            </button>
+          ) : null}
           {request.status !== "accepted" ? (
             <button
               className="ghost-button"

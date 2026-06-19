@@ -201,7 +201,8 @@ export default function SellerInquiryDetails() {
                         state: {
                           inquiry: {
                             ...r,
-                            buyerName: r.buyerName || "Buyer",
+                            myRole: "seller",
+                            otherName: r.buyerName || "Buyer",
                             location: r.address,
                           },
                         },

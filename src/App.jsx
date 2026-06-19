@@ -30,6 +30,7 @@ import HaulerHaulOpportunity from "./components/HaulerHaulOpportunity";
 
 import ProfileScreen from "./components/ProfileScreen";
 import MessageThread from "./components/MessageThread";
+import MessagesInbox from "./components/MessagesInbox";
 
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -149,6 +150,7 @@ function AppInner() {
 
       {/* Profile + Messages */}
       <Route path="/profile" element={<ProfileScreen />} />
+      <Route path="/messages" element={<MessagesInbox />} />
       <Route path="/messages/thread" element={<MessageThread />} />
       </Route>
 

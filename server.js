@@ -418,6 +418,52 @@ app.get('/api/messages', requireAuth, (req, res) => {
   res.json(data.messages.filter((m) => m.senderEmail === req.userEmail));
 });
 
+// Inbox: the message threads the signed-in user participates in. Threads are
+// keyed by a request id; participants are that request's buyer and the seller
+// who owns the listing.
+app.get('/api/threads', requireAuth, (req, res) => {
+  const me = req.userEmail;
+  const byThread = {};
+  for (const m of data.messages) {
+    (byThread[m.threadId] = byThread[m.threadId] || []).push(m);
+  }
+  const threads = [];
+  for (const threadId of Object.keys(byThread)) {
+    const request = data.requests.find((r) => String(r.id) === String(threadId));
+    if (!request) continue; // only request-based threads for now
+    const listing = data.listings.find(
+      (l) => String(l.id) === String(request.listingId)
+    );
+    const sellerEmail = listing?.sellerEmail;
+    const buyerEmail = request.buyerEmail;
+    if (me !== sellerEmail && me !== buyerEmail) continue;
+
+    const otherEmail = me === buyerEmail ? sellerEmail : buyerEmail;
+    const other = data.accounts[otherEmail];
+    const msgs = byThread[threadId]
+      .slice()
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    const last = msgs[msgs.length - 1];
+
+    threads.push({
+      threadId,
+      requestId: request.id,
+      title: `${request.material || "Material"} • ${request.quantity || ""} ${request.unit || ""}`.trim(),
+      myRole: me === sellerEmail ? "seller" : "buyer",
+      otherName: other?.name || otherEmail || "User",
+      address: request.address || "",
+      material: request.material || "",
+      quantity: request.quantity,
+      unit: request.unit || "",
+      lastText: last?.text || "",
+      lastAt: last?.createdAt || null,
+      count: msgs.length,
+    });
+  }
+  threads.sort((a, b) => new Date(b.lastAt || 0) - new Date(a.lastAt || 0));
+  res.json(threads);
+});
+
 app.post('/api/messages', requireAuth, (req, res) => {
   const b = req.body || {};
   const msg = {
