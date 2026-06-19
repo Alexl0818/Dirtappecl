@@ -232,6 +232,13 @@ app.post('/api/requests', requireAuth, (req, res) => {
 app.patch('/api/requests/:id', requireAuth, (req, res) => {
   const r = data.requests.find((x) => String(x.id) === String(req.params.id));
   if (!r) return res.status(404).json({ error: 'Request not found.' });
+  // The buyer who made it, or the seller who owns the listing, may update it.
+  const ownsListing = data.listings.some(
+    (l) => String(l.id) === String(r.listingId) && l.sellerEmail === req.userEmail
+  );
+  if (r.buyerEmail !== req.userEmail && !ownsListing) {
+    return res.status(403).json({ error: 'Not allowed to update this request.' });
+  }
   Object.assign(r, req.body || {});
   save();
   res.json(r);
@@ -286,6 +293,9 @@ app.post('/api/opportunities', requireAuth, (req, res) => {
 app.patch('/api/opportunities/:id', requireAuth, (req, res) => {
   const o = data.opportunities.find((x) => String(x.id) === String(req.params.id));
   if (!o) return res.status(404).json({ error: 'Opportunity not found.' });
+  if (o.sellerEmail && o.sellerEmail !== req.userEmail) {
+    return res.status(403).json({ error: 'Not your opportunity.' });
+  }
   Object.assign(o, req.body || {});
   save();
   res.json(o);

@@ -37,7 +37,10 @@ DELETE endpoints for the "clear" actions. Consumers updated to async
 - **Password hashing added** (scrypt, built into Node — no deps). New signups are
   hashed; legacy plaintext accounts transparently upgrade to a hash on next login.
   Verified: new + legacy logins work, wrong passwords rejected, stored values are
-  `scrypt$…`. Remaining follow-up: tighten a couple of per-resource write checks.
+  `scrypt$…`.
+- **Per-resource write authorization tightened.** PATCH request/opportunity now
+  enforce ownership. Verified: seller (owns listing) 200, unauthorized user 403,
+  no token 401.
 
 **Dev runs as one command:** Vite now auto-starts the API server via a dev-only
 plugin (`vite.config.js`), so `npm run dev` (or just `vite`) boots both UI and
