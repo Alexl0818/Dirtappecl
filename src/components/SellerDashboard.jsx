@@ -1,11 +1,31 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 import GlassCard from "./GlassCard";
 import BottomNav from "./BottomNav";
+import { useSellerListings } from "./SellerListingContext";
+import { useInquiry } from "./InquiryContext";
+import { useHaulBids } from "./HaulBidContext";
 
 export default function SellerDashboard() {
   const navigate = useNavigate();
+  const { listings } = useSellerListings();
+  const { requests } = useInquiry();
+  const { opportunities } = useHaulBids();
+
+  const stats = useMemo(() => {
+    const safeListings = Array.isArray(listings) ? listings : [];
+    const safeRequests = Array.isArray(requests) ? requests : [];
+    const safeOpps = Array.isArray(opportunities) ? opportunities : [];
+    const listingIds = new Set(safeListings.map((l) => String(l?.id)));
+    return {
+      active: safeListings.filter((l) => (l?.status ?? "active") === "active").length,
+      requests: safeRequests.filter((r) => listingIds.has(String(r?.listingId))).length,
+      awarded: safeOpps.filter(
+        (o) => o?.status === "awarded" && listingIds.has(String(o?.listingId))
+      ).length,
+    };
+  }, [listings, requests, opportunities]);
 
   return (
     <div className="app-root">
@@ -19,6 +39,21 @@ export default function SellerDashboard() {
           <button className="primary-button" onClick={() => navigate("/seller/new")}>
             New Listing
           </button>
+        </div>
+
+        <div className="dashboard-grid kpi-grid">
+          <GlassCard className="dashboard-card kpi-card">
+            <div className="kpi-value">{stats.active}</div>
+            <div className="kpi-label">Active listings</div>
+          </GlassCard>
+          <GlassCard className="dashboard-card kpi-card">
+            <div className="kpi-value">{stats.requests}</div>
+            <div className="kpi-label">Buyer requests</div>
+          </GlassCard>
+          <GlassCard className="dashboard-card kpi-card">
+            <div className="kpi-value">{stats.awarded}</div>
+            <div className="kpi-label">Awarded hauls</div>
+          </GlassCard>
         </div>
 
         <div className="dashboard-grid">

@@ -22,6 +22,14 @@ for him. Done & **verified live**:
   No env key required anymore. Data model unchanged (`lat`/`lng`/`geoFormatted`), so
   Google can be swapped back later if ever wanted.
 
+## 📊 Live KPI dashboards (new)
+
+The three role landing pages were nav-cards only; now each shows at-a-glance live
+counts (using the previously-unused `.kpi-*` styles): Seller → active listings /
+buyer requests / awarded hauls; Buyer → your requests / listings available; Hauler →
+open opportunities / bids placed / awarded. Verified live with real counts; console
+clean. Also refreshed a couple of stale card descriptions (e.g. Map View).
+
 ## 🔎 Proximity search for buyers (new)
 
 Browse Listings gained a "Near a location" field: type a city/zip/jobsite (or

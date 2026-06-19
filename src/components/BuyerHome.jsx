@@ -1,11 +1,24 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import GlassCard from "./GlassCard";
 import BottomNav from "./BottomNav";
+import { useInquiry } from "./InquiryContext";
+import { useSellerListings } from "./SellerListingContext";
 import "./BuyerHome.css";
 
 export default function BuyerHome() {
   const navigate = useNavigate();
+  const { requests } = useInquiry();
+  const { listings } = useSellerListings();
+
+  const stats = useMemo(() => {
+    const safeRequests = Array.isArray(requests) ? requests : [];
+    const safeListings = Array.isArray(listings) ? listings : [];
+    return {
+      requests: safeRequests.length,
+      available: safeListings.filter((l) => (l?.status ?? "active") === "active").length,
+    };
+  }, [requests, listings]);
 
   return (
     <div className="app-root">
@@ -19,6 +32,17 @@ export default function BuyerHome() {
           <button className="primary-button" onClick={() => navigate("/buyer/request")}>
             New Request
           </button>
+        </div>
+
+        <div className="dashboard-grid kpi-grid">
+          <GlassCard className="dashboard-card kpi-card">
+            <div className="kpi-value">{stats.requests}</div>
+            <div className="kpi-label">Your requests</div>
+          </GlassCard>
+          <GlassCard className="dashboard-card kpi-card">
+            <div className="kpi-value">{stats.available}</div>
+            <div className="kpi-label">Listings available</div>
+          </GlassCard>
         </div>
 
         <div className="dashboard-grid">
@@ -39,7 +63,7 @@ export default function BuyerHome() {
 
           <GlassCard className="dashboard-card" onClick={() => navigate("/buyer/map")}>
             <div className="card-title">Map View</div>
-            <div className="card-description">Map placeholder for later.</div>
+            <div className="card-description">Browse available material on a map.</div>
           </GlassCard>
         </div>
       </main>

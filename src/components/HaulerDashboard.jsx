@@ -10,6 +10,12 @@ export default function HaulerDashboard() {
   const haul = useHaulBids();
 
   const opps = Array.isArray(haul.opportunities) ? haul.opportunities : [];
+  const allBids = Array.isArray(haul.bids) ? haul.bids : [];
+  const stats = {
+    open: opps.filter((o) => (o?.status ?? "open") === "open").length,
+    bids: allBids.length,
+    awarded: opps.filter((o) => o?.status === "awarded").length,
+  };
 
   return (
     <div className="app-root">
@@ -23,6 +29,21 @@ export default function HaulerDashboard() {
           <button className="ghost-button" onClick={() => navigate("/mode")}>
             Switch Mode
           </button>
+        </div>
+
+        <div className="dashboard-grid kpi-grid">
+          <GlassCard className="dashboard-card kpi-card">
+            <div className="kpi-value">{stats.open}</div>
+            <div className="kpi-label">Open opportunities</div>
+          </GlassCard>
+          <GlassCard className="dashboard-card kpi-card">
+            <div className="kpi-value">{stats.bids}</div>
+            <div className="kpi-label">Bids placed</div>
+          </GlassCard>
+          <GlassCard className="dashboard-card kpi-card">
+            <div className="kpi-value">{stats.awarded}</div>
+            <div className="kpi-label">Awarded</div>
+          </GlassCard>
         </div>
 
         {opps.length === 0 ? (
