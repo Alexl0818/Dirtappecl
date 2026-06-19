@@ -46,22 +46,22 @@ export default function BuyerHome() {
         </div>
 
         <div className="dashboard-grid">
-          <GlassCard className="dashboard-card" onClick={() => navigate("/buyer/request")}>
+          <GlassCard className="dashboard-card nav-card" onClick={() => navigate("/buyer/request")}>
             <div className="card-title">Create Request</div>
             <div className="card-description">Post what material you need.</div>
           </GlassCard>
 
-          <GlassCard className="dashboard-card" onClick={() => navigate("/buyer/requests")}>
+          <GlassCard className="dashboard-card nav-card" onClick={() => navigate("/buyer/requests")}>
             <div className="card-title">Your Requests</div>
             <div className="card-description">View requests you’ve submitted.</div>
           </GlassCard>
 
-          <GlassCard className="dashboard-card" onClick={() => navigate("/buyer/browse")}>
+          <GlassCard className="dashboard-card nav-card" onClick={() => navigate("/buyer/browse")}>
             <div className="card-title">Browse Listings</div>
             <div className="card-description">See material posted by sellers.</div>
           </GlassCard>
 
-          <GlassCard className="dashboard-card" onClick={() => navigate("/buyer/map")}>
+          <GlassCard className="dashboard-card nav-card" onClick={() => navigate("/buyer/map")}>
             <div className="card-title">Map View</div>
             <div className="card-description">Browse available material on a map.</div>
           </GlassCard>

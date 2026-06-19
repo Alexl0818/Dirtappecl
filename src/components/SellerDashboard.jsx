@@ -61,28 +61,28 @@ export default function SellerDashboard() {
         </div>
 
         <div className="dashboard-grid">
-          <GlassCard className="dashboard-card" onClick={() => navigate("/seller/new")}>
+          <GlassCard className="dashboard-card nav-card" onClick={() => navigate("/seller/new")}>
             <div className="card-title">Create Listing</div>
             <div className="card-description">
               Post available material and delivery details.
             </div>
           </GlassCard>
 
-          <GlassCard className="dashboard-card" onClick={() => navigate("/seller/listing")}>
+          <GlassCard className="dashboard-card nav-card" onClick={() => navigate("/seller/listing")}>
             <div className="card-title">Listing Details</div>
             <div className="card-description">
               View and manage your active listings.
             </div>
           </GlassCard>
 
-          <GlassCard className="dashboard-card" onClick={() => navigate("/seller/listing")}>
+          <GlassCard className="dashboard-card nav-card" onClick={() => navigate("/seller/listing")}>
             <div className="card-title">Inquiry Details</div>
             <div className="card-description">
               Open a listing to review its buyer requests.
             </div>
           </GlassCard>
 
-          <GlassCard className="dashboard-card" onClick={() => navigate("/mode")}>
+          <GlassCard className="dashboard-card nav-card" onClick={() => navigate("/mode")}>
             <div className="card-title">Switch Mode</div>
             <div className="card-description">Go back to Buyer / Hauler selection.</div>
           </GlassCard>
