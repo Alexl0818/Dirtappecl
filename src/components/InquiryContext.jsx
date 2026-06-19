@@ -6,6 +6,7 @@ const LS_KEY = "dirtapp_buyer_requests";
 
 export function InquiryProvider({ children }) {
   const [requests, setRequests] = useState([]);
+  const [ready, setReady] = useState(false);
 
   // Load from localStorage on boot
   useEffect(() => {
@@ -17,16 +18,19 @@ export function InquiryProvider({ children }) {
       console.error("InquiryContext: failed to load localStorage", e);
       setRequests([]);
     }
+    setReady(true);
   }, []);
 
-  // Persist to localStorage any time requests change
+  // Persist to localStorage any time requests change (after the initial load,
+  // so we never clobber stored data with the empty initial state).
   useEffect(() => {
+    if (!ready) return;
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(requests));
     } catch (e) {
       console.error("InquiryContext: failed to save localStorage", e);
     }
-  }, [requests]);
+  }, [requests, ready]);
 
   // Public API (keep it simple + stable)
   function addRequest(request) {

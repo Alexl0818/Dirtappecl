@@ -12,6 +12,7 @@ const LS_KEY = "dirtapp_seller_listings";
 
 export function SellerListingProvider({ children }) {
   const [listings, setListings] = useState([]);
+  const [ready, setReady] = useState(false);
 
   // Load listings from localStorage on mount
   useEffect(() => {
@@ -23,16 +24,18 @@ export function SellerListingProvider({ children }) {
       console.error("SellerListingContext: load failed", e);
       setListings([]);
     }
+    setReady(true);
   }, []);
 
-  // Persist listings to localStorage
+  // Persist listings (after the initial load, so we never clobber stored data).
   useEffect(() => {
+    if (!ready) return;
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(listings));
     } catch (e) {
       console.error("SellerListingContext: save failed", e);
     }
-  }, [listings]);
+  }, [listings, ready]);
 
   function addListing(listing) {
     setListings((prev) => [listing, ...(Array.isArray(prev) ? prev : [])]);

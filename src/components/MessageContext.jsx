@@ -11,6 +11,7 @@ const LS_KEY = "dirtapp_messages";
 
 export function MessageProvider({ children }) {
   const [threads, setThreads] = useState({});
+  const [ready, setReady] = useState(false);
 
   // Load threads from localStorage on mount
   useEffect(() => {
@@ -22,16 +23,18 @@ export function MessageProvider({ children }) {
       console.error("MessageContext: load failed", e);
       setThreads({});
     }
+    setReady(true);
   }, []);
 
-  // Persist threads any time they change
+  // Persist threads (after the initial load, so we never clobber stored data).
   useEffect(() => {
+    if (!ready) return;
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(threads));
     } catch (e) {
       console.error("MessageContext: save failed", e);
     }
-  }, [threads]);
+  }, [threads, ready]);
 
   const sendMessage = (inquiryId, message) => {
     setThreads((prev) => {

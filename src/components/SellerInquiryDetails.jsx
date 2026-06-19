@@ -36,9 +36,8 @@ export default function SellerInquiryDetails() {
   }, [listingRequests]);
 
   const oppForAcceptedRequest = useMemo(() => {
-    if (!acceptedRequest) {
-      return safeOpps.find((o) => String(o.listingId) === String(listingId)) || null;
-    }
+    // Only surface a haul opportunity once a request on this listing is accepted.
+    if (!acceptedRequest) return null;
 
     const byReq =
       safeOpps.find(
@@ -49,6 +48,7 @@ export default function SellerInquiryDetails() {
 
     if (byReq) return byReq;
 
+    // Fallback: an opportunity tied to this listing (one accepted request/listing).
     return safeOpps.find((o) => String(o.listingId) === String(listingId)) || null;
   }, [safeOpps, acceptedRequest, listingId]);
 

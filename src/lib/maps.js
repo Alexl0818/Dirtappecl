@@ -23,10 +23,19 @@ export const DEFAULT_ZOOM = 4;
 export async function geocodeAddress(address) {
   const text = String(address || "").trim();
   if (!text) return null;
-  if (typeof window === "undefined" || !window.google?.maps?.Geocoder) return null;
+  if (typeof window === "undefined" || !window.google?.maps) return null;
 
   try {
-    const geocoder = new window.google.maps.Geocoder();
+    // The geocoding library may not be loaded yet — pull it in on demand so
+    // this works with a valid key regardless of how the script was initialized.
+    let Geocoder = window.google.maps.Geocoder;
+    if (!Geocoder && typeof window.google.maps.importLibrary === "function") {
+      const lib = await window.google.maps.importLibrary("geocoding");
+      Geocoder = lib?.Geocoder;
+    }
+    if (!Geocoder) return null;
+
+    const geocoder = new Geocoder();
     const { results } = await geocoder.geocode({ address: text });
     const hit = results?.[0];
     if (!hit?.geometry?.location) return null;

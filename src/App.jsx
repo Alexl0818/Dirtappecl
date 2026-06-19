@@ -1,10 +1,10 @@
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { APIProvider } from "@vis.gl/react-google-maps";
 
 import { GMAPS_KEY, hasMapsKey } from "./lib/maps";
 
-import { AuthProvider } from "./components/AuthContext";
+import { AuthProvider, useAuth } from "./components/AuthContext";
 import { InquiryProvider } from "./components/InquiryContext";
 import { SellerListingProvider } from "./components/SellerListingContext";
 import { HaulBidProvider } from "./components/HaulBidContext";
@@ -38,14 +38,26 @@ import ErrorBoundary from "./components/ErrorBoundary";
 
 import "./App.css";
 
+// Gate for protected routes: wait for auth to load, then require a signed-in
+// user (otherwise bounce to login).
+function RequireAuth() {
+  const { isAuthenticated, ready } = useAuth();
+  if (!ready) return null;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <Outlet />;
+}
+
 function AppInner() {
   return (
     <Routes>
+      {/* Public */}
       <Route path="/" element={<WelcomeScreen />} />
       <Route path="/login" element={<LoginScreen />} />
-      <Route path="/mode" element={<ModeSelectScreen />} />
-
       <Route path="/signup" element={<SignupScreen />} />
+
+      {/* Everything below requires a signed-in user */}
+      <Route element={<RequireAuth />}>
+      <Route path="/mode" element={<ModeSelectScreen />} />
 
       {/* Buyer */}
       <Route path="/buyer/home" element={<BuyerHome />} />
@@ -141,6 +153,7 @@ function AppInner() {
       {/* Profile + Messages */}
       <Route path="/profile" element={<ProfileScreen />} />
       <Route path="/messages/thread" element={<MessageThread />} />
+      </Route>
 
       {/* Catch-all: send unknown URLs back to the welcome screen */}
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -37,11 +37,29 @@ Node 20 installed at `~/.local/node-v20.18.1-darwin-x64/bin` (no system Node).
   haul opportunity → hauler dashboard. All green, console clean. Map fallback
   screen verified (screenshot-confirmed).
 
+- **Bug sweep (Task #1) — DONE.** Full read-only audit of `src/` (the first
+  background agent died with a process restart; re-ran it foreground). Codebase
+  came back clean overall — defensive guards, no import/export mismatches, no
+  unstable keys, all routes resolve. Acted on the real findings:
+  - **(HIGH)** `SellerInquiryDetails`: the "no accepted request" branch could
+    surface a haul opportunity + bids for a listing with no accepted request
+    (listingId fallback). Now returns null unless a request is accepted.
+  - **(hardening)** Added a `ready` guard to all four data contexts (Inquiry,
+    SellerListing, HaulBid, Message) so the save effect can't write empty initial
+    state over stored data — matches AuthContext. Verified: data survives restart.
+  - **(MEDIUM)** Added a `RequireAuth` route guard — `/mode` and all
+    buyer/seller/hauler/profile/messages routes redirect to `/login` when signed
+    out. Verified: logged-out → login; logged-in → access; console clean.
+  - Made `geocodeAddress` load the geocoding library on demand so it works with
+    a key regardless of init order.
+  - Audit non-issues (acknowledged, no action): bare `confirm()` (browser-safe),
+    one-directional MessageThread (no buyer composer yet) — product gaps, not bugs.
+
 ## 🔁 Still open
 
-- **Bug sweep (Task #1):** a read-only audit subagent is combing `src/` for any
-  remaining correctness issues; its findings will be folded in next.
 - **Map tiles:** add a Google Maps key (`.env.local`) to see the live map render.
+- **Per-user data:** listings/requests are global in localStorage (any signed-in
+  user sees all). Real per-account scoping is a backend concern (next milestone).
 
 ## ⚠️ Needs Alex (not blocking the build)
 

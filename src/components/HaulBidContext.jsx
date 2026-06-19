@@ -8,6 +8,7 @@ const LS_BIDS = "dirtapp_haul_bids";
 export function HaulBidProvider({ children }) {
   const [opportunities, setOpportunities] = useState([]);
   const [bids, setBids] = useState([]); // each bid: { id, oppId, amount, availability, notes, createdAt, status }
+  const [ready, setReady] = useState(false);
 
   // Load opportunities
   useEffect(() => {
@@ -31,25 +32,28 @@ export function HaulBidProvider({ children }) {
       console.error("HaulBidContext: bids load failed", e);
       setBids([]);
     }
+    setReady(true);
   }, []);
 
-  // Persist opportunities
+  // Persist opportunities (after the initial load, so we never clobber data).
   useEffect(() => {
+    if (!ready) return;
     try {
       localStorage.setItem(LS_OPPS, JSON.stringify(opportunities));
     } catch (e) {
       console.error("HaulBidContext: opportunities save failed", e);
     }
-  }, [opportunities]);
+  }, [opportunities, ready]);
 
-  // Persist bids
+  // Persist bids (after the initial load).
   useEffect(() => {
+    if (!ready) return;
     try {
       localStorage.setItem(LS_BIDS, JSON.stringify(bids));
     } catch (e) {
       console.error("HaulBidContext: bids save failed", e);
     }
-  }, [bids]);
+  }, [bids, ready]);
 
   function addOpportunity(opp) {
     setOpportunities((prev) => [opp, ...(Array.isArray(prev) ? prev : [])]);
