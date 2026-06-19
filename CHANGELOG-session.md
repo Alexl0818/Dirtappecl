@@ -22,6 +22,14 @@ for him. Done & **verified live**:
   No env key required anymore. Data model unchanged (`lat`/`lng`/`geoFormatted`), so
   Google can be swapped back later if ever wanted.
 
+## 🔎 Proximity search for buyers (new)
+
+Browse Listings gained a "Near a location" field: type a city/zip/jobsite (or
+"Use my location" via browser geolocation) and listings are measured + sorted
+nearest-first, each showing "~N mi away". Serves the core buyer use case ("find
+material near my jobsite"). Verified live: from Charlotte, Asheville listing (~99 mi)
+sorts above Raleigh listing (~130 mi). Console clean.
+
 ## 📏 Distance-aware haul opportunities (new)
 
 Builds on the geo data: haulers now see **haul distance** (pickup→dropoff), the key
