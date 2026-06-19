@@ -1,5 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import GlassCard from "./GlassCard";
+import BottomNav from "./BottomNav";
 import { useInquiry } from "./InquiryContext";
 
 export default function BuyerRequests() {
@@ -9,83 +11,104 @@ export default function BuyerRequests() {
   const requests = Array.isArray(inquiry.requests) ? inquiry.requests : [];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#222", color: "white", padding: 20 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <h1 style={{ margin: 0 }}>Buyer Requests</h1>
-        <div style={{ opacity: 0.7 }}>({requests.length} total)</div>
-      </div>
-
-      <p style={{ opacity: 0.85 }}>Your submitted material requests.</p>
-
-      <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-        <button onClick={() => navigate("/buyer/request")}>New Request</button>
-        <button onClick={() => navigate("/buyer/home")}>Back</button>
-      </div>
-
-      {requests.length === 0 ? (
-        <div style={{ opacity: 0.85 }}>
-          <p>No requests yet.</p>
-          <button onClick={() => navigate("/buyer/request")}>Create your first request</button>
-        </div>
-      ) : (
-        <div style={{ display: "grid", gap: 12, maxWidth: 720 }}>
-          {requests.map((r) => {
-            const id = r?.id ?? `req_${Math.random().toString(36).slice(2)}`;
-            const material = r?.material ?? "Unknown";
-            const qty = r?.quantity ?? "";
-            const unit = r?.unit ?? "";
-            const address = r?.address ?? "";
-            const status = r?.status ?? "open";
-            const createdAt = r?.createdAt
-              ? new Date(r.createdAt).toLocaleString()
-              : "";
-
-            return (
-              <div
-                key={id}
-                style={{
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  borderRadius: 10,
-                  padding: 12,
-                  background: "rgba(255,255,255,0.04)",
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                  <div style={{ fontWeight: 700 }}>
-                    {material} — {qty} {unit}
-                  </div>
-                  <div style={{ opacity: 0.75 }}>{status}</div>
-                </div>
-
-                {address ? <div style={{ marginTop: 6, opacity: 0.9 }}>{address}</div> : null}
-                {createdAt ? <div style={{ marginTop: 6, opacity: 0.65 }}>{createdAt}</div> : null}
-
-                <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
-                  <button
-                    onClick={() =>
-                      navigate("/buyer/request-details", { state: { request: r } })
-                    }
-                  >
-                    View Details
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {requests.length > 0 ? (
-        <div style={{ marginTop: 18 }}>
-          <button
-            onClick={() => {
-              if (confirm("Clear all requests?")) inquiry.clearRequests();
-            }}
-          >
-            Clear All Requests
+    <div className="app-root">
+      <main className="app-main">
+        <div className="dashboard-header">
+          <div>
+            <h2 className="section-title">Your Requests</h2>
+            <p className="section-subtitle">
+              {requests.length} submitted material request
+              {requests.length === 1 ? "" : "s"}.
+            </p>
+          </div>
+          <button className="primary-button" onClick={() => navigate("/buyer/request")}>
+            New Request
           </button>
         </div>
-      ) : null}
+
+        {requests.length === 0 ? (
+          <GlassCard className="dashboard-card">
+            <div className="card-title">No requests yet</div>
+            <div className="card-description" style={{ marginBottom: 12 }}>
+              Post what material you need and sellers can respond.
+            </div>
+            <button
+              className="primary-button full-width"
+              onClick={() => navigate("/buyer/request")}
+            >
+              Create your first request
+            </button>
+          </GlassCard>
+        ) : (
+          <div className="dashboard-grid">
+            {requests.map((r, idx) => {
+              const id = r?.id ?? `row_${idx}`;
+              const material = r?.material ?? "Unknown";
+              const qty = r?.quantity ?? "";
+              const unit = r?.unit ?? "";
+              const address = r?.address ?? "";
+              const status = r?.status ?? "open";
+              const createdAt = r?.createdAt
+                ? new Date(r.createdAt).toLocaleString()
+                : "";
+
+              return (
+                <GlassCard key={id} className="dashboard-card">
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                    <div className="card-title">
+                      {material} — {qty} {unit}
+                    </div>
+                    <span
+                      className={`status-pill ${
+                        status === "accepted" ? "status-active" : "status-draft"
+                      }`}
+                    >
+                      {status}
+                    </span>
+                  </div>
+
+                  {address ? (
+                    <div className="card-description" style={{ marginTop: 8 }}>
+                      {address}
+                    </div>
+                  ) : null}
+                  {createdAt ? (
+                    <div style={{ marginTop: 6, fontSize: "0.78rem", opacity: 0.65 }}>
+                      {createdAt}
+                    </div>
+                  ) : null}
+
+                  <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
+                    <button
+                      className="primary-button"
+                      onClick={() =>
+                        navigate("/buyer/request-details", { state: { request: r } })
+                      }
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </GlassCard>
+              );
+            })}
+          </div>
+        )}
+
+        {requests.length > 0 ? (
+          <div style={{ marginTop: 18 }}>
+            <button
+              className="ghost-button"
+              onClick={() => {
+                if (window.confirm("Clear all your requests?")) inquiry.clearRequests();
+              }}
+            >
+              Clear All Requests
+            </button>
+          </div>
+        ) : null}
+      </main>
+
+      <BottomNav />
     </div>
   );
 }

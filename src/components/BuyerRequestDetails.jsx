@@ -1,5 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import GlassCard from "./GlassCard";
+import BottomNav from "./BottomNav";
 import RouteMiniMap from "./RouteMiniMap";
 import { hasCoords } from "../lib/maps";
 
@@ -10,29 +12,11 @@ function formatDate(iso) {
   return d.toLocaleString();
 }
 
-const screenStyle = {
-  minHeight: "100vh",
-  padding: "24px",
-  background: "#111",
-  color: "#fff",
-};
-
-const cardStyle = {
-  border: "1px solid rgba(255,255,255,0.15)",
-  borderRadius: 12,
-  padding: 16,
-  background: "rgba(255,255,255,0.04)",
-  maxWidth: 640,
-};
-
-const labelStyle = { opacity: 0.6, fontSize: 12, marginTop: 12 };
-const valueStyle = { fontSize: 15, marginTop: 2 };
-
 function Row({ label, value }) {
   return (
-    <div>
-      <div style={labelStyle}>{label}</div>
-      <div style={valueStyle}>{value || "—"}</div>
+    <div style={{ marginTop: 10 }}>
+      <div style={{ fontSize: 12, opacity: 0.6 }}>{label}</div>
+      <div style={{ fontSize: 14, marginTop: 2 }}>{value || "—"}</div>
     </div>
   );
 }
@@ -44,60 +28,78 @@ export default function BuyerRequestDetails() {
 
   if (!request) {
     return (
-      <div style={screenStyle}>
-        <h1>Request details</h1>
-        <p style={{ opacity: 0.8 }}>
-          No request selected. Open a request from your list first.
-        </p>
-        <button onClick={() => navigate("/buyer/requests")}>
-          Back to requests
-        </button>
+      <div className="app-root">
+        <main className="app-main">
+          <h2 className="section-title">Request details</h2>
+          <GlassCard className="dashboard-card" style={{ marginTop: 12 }}>
+            <div className="card-description" style={{ marginBottom: 12 }}>
+              No request selected. Open a request from your list first.
+            </div>
+            <button
+              className="primary-button full-width"
+              onClick={() => navigate("/buyer/requests")}
+            >
+              Back to requests
+            </button>
+          </GlassCard>
+        </main>
+        <BottomNav />
       </div>
     );
   }
 
   return (
-    <div style={screenStyle}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <h1 style={{ margin: 0 }}>Request details</h1>
-        <span style={{ opacity: 0.75 }}>{request.status || "open"}</span>
-      </div>
+    <div className="app-root">
+      <main className="app-main">
+        <div className="dashboard-header">
+          <div>
+            <h2 className="section-title">Request details</h2>
+            <p className="section-subtitle">Your submitted material request.</p>
+          </div>
+          <span
+            className={`status-pill ${
+              request.status === "accepted" ? "status-active" : "status-draft"
+            }`}
+          >
+            {request.status || "open"}
+          </span>
+        </div>
 
-      <div style={{ ...cardStyle, marginTop: 16 }}>
-        <Row
-          label="Material"
-          value={`${request.material || "Unknown"} — ${request.quantity ?? ""} ${
-            request.unit || ""
-          }`.trim()}
-        />
-        <Row label="Delivery address" value={request.address} />
-        <Row label="Notes" value={request.notes} />
-        <Row label="Request ID" value={request.id} />
-        <Row label="Linked listing" value={request.listingId} />
-        <Row label="Submitted" value={formatDate(request.createdAt)} />
-      </div>
+        <GlassCard className="dashboard-card">
+          <Row
+            label="Material"
+            value={`${request.material || "Unknown"} — ${request.quantity ?? ""} ${
+              request.unit || ""
+            }`.trim()}
+          />
+          <Row label="Delivery address" value={request.address} />
+          <Row label="Notes" value={request.notes} />
+          <Row label="Submitted" value={formatDate(request.createdAt)} />
+        </GlassCard>
 
-      {hasCoords(request) ? (
-        <div style={{ ...cardStyle, marginTop: 16 }}>
-          <div style={labelStyle}>Delivery location</div>
-          <div style={{ marginTop: 8 }}>
+        {hasCoords(request) ? (
+          <GlassCard className="dashboard-card" style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
+              Delivery location
+            </div>
             <RouteMiniMap
-              pickup={{
-                lat: request.lat,
-                lng: request.lng,
-                label: request.address,
-              }}
+              pickup={{ lat: request.lat, lng: request.lng, label: request.address }}
               height={200}
             />
-          </div>
-        </div>
-      ) : null}
+          </GlassCard>
+        ) : null}
 
-      <div style={{ marginTop: 20, display: "flex", gap: 10 }}>
-        <button onClick={() => navigate("/buyer/requests")}>
-          Back to requests
-        </button>
-      </div>
+        <div style={{ marginTop: 16 }}>
+          <button
+            className="ghost-button"
+            onClick={() => navigate("/buyer/requests")}
+          >
+            Back to requests
+          </button>
+        </div>
+      </main>
+
+      <BottomNav />
     </div>
   );
 }
