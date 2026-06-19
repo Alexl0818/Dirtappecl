@@ -3,12 +3,15 @@ import { useNavigate } from "react-router-dom";
 import GlassCard from "./GlassCard";
 import BottomNav from "./BottomNav";
 import { useInquiry } from "./InquiryContext";
+import { useHaulBids } from "./HaulBidContext";
 
 export default function BuyerRequests() {
   const navigate = useNavigate();
   const inquiry = useInquiry();
+  const { opportunities } = useHaulBids();
 
   const requests = Array.isArray(inquiry.requests) ? inquiry.requests : [];
+  const opps = Array.isArray(opportunities) ? opportunities : [];
 
   return (
     <div className="app-root">
@@ -48,6 +51,10 @@ export default function BuyerRequests() {
               const unit = r?.unit ?? "";
               const address = r?.address ?? "";
               const status = r?.status ?? "open";
+              const opp = opps.find((o) => String(o.requestId) === String(r?.id));
+              const awarded = opp?.status === "awarded";
+              const label = awarded ? "Hauler assigned" : status;
+              const good = awarded || status === "accepted";
               const createdAt = r?.createdAt
                 ? new Date(r.createdAt).toLocaleString()
                 : "";
@@ -59,11 +66,9 @@ export default function BuyerRequests() {
                       {material} — {qty} {unit}
                     </div>
                     <span
-                      className={`status-pill ${
-                        status === "accepted" ? "status-active" : "status-draft"
-                      }`}
+                      className={`status-pill ${good ? "status-active" : "status-draft"}`}
                     >
-                      {status}
+                      {label}
                     </span>
                   </div>
 
