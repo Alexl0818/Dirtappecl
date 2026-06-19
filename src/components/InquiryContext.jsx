@@ -1,72 +1,77 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useAuth } from "./AuthContext";
+import { api } from "../lib/api";
 
 const InquiryContext = createContext(null);
 
-const LS_KEY = "dirtapp_buyer_requests";
+// Buyer requests now live on the server. `requests` holds what the current user
+// can see: their own requests + requests on listings they own (server-scoped).
 
 export function InquiryProvider({ children }) {
+  const { user, ready } = useAuth();
   const [requests, setRequests] = useState([]);
-  const [ready, setReady] = useState(false);
 
-  // Load from localStorage on boot
-  useEffect(() => {
+  async function refresh() {
     try {
-      const raw = localStorage.getItem(LS_KEY);
-      const parsed = JSON.parse(raw || "[]");
-      setRequests(Array.isArray(parsed) ? parsed : []);
+      const data = await api.get("/requests");
+      setRequests(Array.isArray(data) ? data : []);
     } catch (e) {
-      console.error("InquiryContext: failed to load localStorage", e);
+      console.error("InquiryContext: load failed", e.message);
       setRequests([]);
     }
-    setReady(true);
-  }, []);
-
-  // Persist to localStorage any time requests change (after the initial load,
-  // so we never clobber stored data with the empty initial state).
-  useEffect(() => {
-    if (!ready) return;
-    try {
-      localStorage.setItem(LS_KEY, JSON.stringify(requests));
-    } catch (e) {
-      console.error("InquiryContext: failed to save localStorage", e);
-    }
-  }, [requests, ready]);
-
-  // Public API (keep it simple + stable)
-  function addRequest(request) {
-    setRequests((prev) => [request, ...(Array.isArray(prev) ? prev : [])]);
   }
 
-  function updateRequest(id, patch) {
+  useEffect(() => {
+    if (ready && user) refresh();
+    else setRequests([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, user]);
+
+  async function addRequest(request) {
+    const created = await api.post("/requests", request);
+    setRequests((prev) => [created, ...(Array.isArray(prev) ? prev : [])]);
+    return created;
+  }
+
+  async function updateRequest(id, patch) {
+    const updated = await api.patch(`/requests/${id}`, patch);
     setRequests((prev) =>
       (Array.isArray(prev) ? prev : []).map((r) =>
-        String(r?.id) === String(id) ? { ...r, ...patch } : r
+        String(r.id) === String(id) ? updated : r
       )
     );
+    return updated;
   }
 
-  function clearRequests() {
-    setRequests([]);
+  async function clearRequests() {
+    const mine = requests.filter((r) => r.buyerEmail === user?.email);
+    await Promise.all(mine.map((r) => api.del(`/requests/${r.id}`).catch(() => {})));
+    refresh();
   }
 
   const value = useMemo(
     () => ({
       requests,
-      // alias: seller screens read these as "inquiries"
-      inquiries: requests,
+      inquiries: requests, // alias: seller screens read these as "inquiries"
       addRequest,
       updateRequest,
       clearRequests,
-      // expose setter too (handy for edits later)
       setRequests,
+      refresh,
     }),
-    [requests]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [requests, user]
   );
 
   return <InquiryContext.Provider value={value}>{children}</InquiryContext.Provider>;
 }
 
-// ✅ This is what your screens are trying to import
 export function useInquiry() {
   const ctx = useContext(InquiryContext);
   if (!ctx) {

@@ -213,14 +213,32 @@ app.patch('/api/requests/:id', requireAuth, (req, res) => {
   res.json(r);
 });
 
+app.delete('/api/requests/:id', requireAuth, (req, res) => {
+  const idx = data.requests.findIndex((x) => String(x.id) === String(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'Request not found.' });
+  if (data.requests[idx].buyerEmail && data.requests[idx].buyerEmail !== req.userEmail) {
+    return res.status(403).json({ error: 'Not your request.' });
+  }
+  data.requests.splice(idx, 1);
+  save();
+  res.json({ ok: true });
+});
+
 /* ------------------------------------------------------------------ *
  * Opportunities + bids
  * ------------------------------------------------------------------ */
 
-// Visible: open opportunities (for haulers) + your own (as seller).
+// Visible: open opportunities (for haulers) + your own (as seller) + any you've
+// bid on (so a hauler still sees the outcome after it's awarded).
 app.get('/api/opportunities', requireAuth, (req, res) => {
+  const myBidOppIds = new Set(
+    data.bids.filter((b) => b.haulerEmail === req.userEmail).map((b) => String(b.oppId))
+  );
   const visible = data.opportunities.filter(
-    (o) => o.status === 'open' || o.sellerEmail === req.userEmail
+    (o) =>
+      o.status === 'open' ||
+      o.sellerEmail === req.userEmail ||
+      myBidOppIds.has(String(o.id))
   );
   res.json(visible);
 });
@@ -293,6 +311,28 @@ app.post('/api/bids', requireAuth, (req, res) => {
   data.bids.unshift(bid);
   save();
   res.json(bid);
+});
+
+app.delete('/api/opportunities/:id', requireAuth, (req, res) => {
+  const idx = data.opportunities.findIndex((x) => String(x.id) === String(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'Opportunity not found.' });
+  if (data.opportunities[idx].sellerEmail && data.opportunities[idx].sellerEmail !== req.userEmail) {
+    return res.status(403).json({ error: 'Not your opportunity.' });
+  }
+  data.opportunities.splice(idx, 1);
+  save();
+  res.json({ ok: true });
+});
+
+app.delete('/api/bids/:id', requireAuth, (req, res) => {
+  const idx = data.bids.findIndex((x) => String(x.id) === String(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'Bid not found.' });
+  if (data.bids[idx].haulerEmail && data.bids[idx].haulerEmail !== req.userEmail) {
+    return res.status(403).json({ error: 'Not your bid.' });
+  }
+  data.bids.splice(idx, 1);
+  save();
+  res.json({ ok: true });
 });
 
 /* ------------------------------------------------------------------ *

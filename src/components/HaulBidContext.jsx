@@ -1,95 +1,107 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useAuth } from "./AuthContext";
+import { api } from "../lib/api";
 
 const HaulBidContext = createContext(null);
 
-const LS_OPPS = "dirtapp_haul_opportunities";
-const LS_BIDS = "dirtapp_haul_bids";
+// Haul opportunities + bids now live on the server. `opportunities` holds open
+// ones (for haulers) plus your own (as seller); `bids` holds your own (as hauler)
+// plus bids on your opportunities (as seller) — all server-scoped.
 
 export function HaulBidProvider({ children }) {
+  const { user, ready } = useAuth();
   const [opportunities, setOpportunities] = useState([]);
-  const [bids, setBids] = useState([]); // each bid: { id, oppId, amount, availability, notes, createdAt, status }
-  const [ready, setReady] = useState(false);
+  const [bids, setBids] = useState([]);
 
-  // Load opportunities
-  useEffect(() => {
+  async function refresh() {
     try {
-      const raw = localStorage.getItem(LS_OPPS);
-      const parsed = JSON.parse(raw || "[]");
-      setOpportunities(Array.isArray(parsed) ? parsed : []);
+      const [opps, bd] = await Promise.all([
+        api.get("/opportunities"),
+        api.get("/bids"),
+      ]);
+      setOpportunities(Array.isArray(opps) ? opps : []);
+      setBids(Array.isArray(bd) ? bd : []);
     } catch (e) {
-      console.error("HaulBidContext: opportunities load failed", e);
-      setOpportunities([]);
+      console.error("HaulBidContext: load failed", e.message);
     }
-  }, []);
+  }
 
-  // Load bids
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(LS_BIDS);
-      const parsed = JSON.parse(raw || "[]");
-      setBids(Array.isArray(parsed) ? parsed : []);
-    } catch (e) {
-      console.error("HaulBidContext: bids load failed", e);
+    if (ready && user) refresh();
+    else {
+      setOpportunities([]);
       setBids([]);
     }
-    setReady(true);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, user]);
 
-  // Persist opportunities (after the initial load, so we never clobber data).
-  useEffect(() => {
-    if (!ready) return;
-    try {
-      localStorage.setItem(LS_OPPS, JSON.stringify(opportunities));
-    } catch (e) {
-      console.error("HaulBidContext: opportunities save failed", e);
-    }
-  }, [opportunities, ready]);
-
-  // Persist bids (after the initial load).
-  useEffect(() => {
-    if (!ready) return;
-    try {
-      localStorage.setItem(LS_BIDS, JSON.stringify(bids));
-    } catch (e) {
-      console.error("HaulBidContext: bids save failed", e);
-    }
-  }, [bids, ready]);
-
-  function addOpportunity(opp) {
-    setOpportunities((prev) => [opp, ...(Array.isArray(prev) ? prev : [])]);
+  async function addOpportunity(opp) {
+    const created = await api.post("/opportunities", opp);
+    setOpportunities((prev) => [created, ...(Array.isArray(prev) ? prev : [])]);
+    return created;
   }
 
-  function clearOpportunities() {
-    setOpportunities([]);
+  async function addBid(bid) {
+    const created = await api.post("/bids", bid);
+    setBids((prev) => [created, ...(Array.isArray(prev) ? prev : [])]);
+    return created;
   }
 
-  function addBid(bid) {
-    setBids((prev) => [bid, ...(Array.isArray(prev) ? prev : [])]);
+  // Atomic award on the server; merge the returned opp + bid updates locally.
+  async function awardBid(oppId, bidId) {
+    const { opportunity, bids: updated } = await api.post(
+      `/opportunities/${oppId}/award`,
+      { bidId }
+    );
+    setOpportunities((prev) =>
+      prev.map((o) => (String(o.id) === String(oppId) ? opportunity : o))
+    );
+    setBids((prev) =>
+      prev.map((b) => updated.find((u) => String(u.id) === String(b.id)) || b)
+    );
+    return opportunity;
   }
 
-  function clearBids() {
-    setBids([]);
+  async function clearOpportunities() {
+    const mine = opportunities.filter((o) => o.sellerEmail === user?.email);
+    await Promise.all(
+      mine.map((o) => api.del(`/opportunities/${o.id}`).catch(() => {}))
+    );
+    refresh();
+  }
+
+  async function clearBids() {
+    const mine = bids.filter((b) => b.haulerEmail === user?.email);
+    await Promise.all(mine.map((b) => api.del(`/bids/${b.id}`).catch(() => {})));
+    refresh();
   }
 
   function getBidsForOpportunity(oppId) {
-    const arr = Array.isArray(bids) ? bids : [];
-    return arr.filter((b) => String(b?.oppId) === String(oppId));
+    return (Array.isArray(bids) ? bids : []).filter(
+      (b) => String(b?.oppId) === String(oppId)
+    );
   }
 
   const value = useMemo(
     () => ({
       opportunities,
-      setOpportunities,
-      addOpportunity,
-      clearOpportunities,
-
       bids,
-      setBids,
+      addOpportunity,
       addBid,
+      awardBid,
+      clearOpportunities,
       clearBids,
       getBidsForOpportunity,
+      refresh,
     }),
-    [opportunities, bids]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [opportunities, bids, user]
   );
 
   return <HaulBidContext.Provider value={value}>{children}</HaulBidContext.Provider>;

@@ -82,15 +82,20 @@ export default function BuyerRequest() {
     // Best-effort geocode so the request location can show on the map.
     setSaving(true);
     const geo = await geocodeAddress(request.address);
-    setSaving(false);
     if (geo) {
       request.lat = geo.lat;
       request.lng = geo.lng;
       request.geoFormatted = geo.formatted;
     }
 
-    inquiry.addRequest(request);
-    navigate("/buyer/requests");
+    try {
+      await inquiry.addRequest(request);
+      navigate("/buyer/requests");
+    } catch (e) {
+      setError(e.message || "Could not submit your request. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (

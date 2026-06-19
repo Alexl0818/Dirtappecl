@@ -17,10 +17,23 @@ real backend with a persistent JSON datastore (`db.js`) and token auth.
   account in a fresh session saw it on Browse. Console clean.
 - Data store (`data.json`) is gitignored.
 
-**Phase 2 (next):** move requests, opportunities, bids, messages to the backend
-too (currently still localStorage), then the whole buyer→seller→hauler loop is
-multi-user. Note: real password hashing + per-resource auth tightening is a
-follow-up (prototype stores plaintext passwords server-side).
+## 🚀 REAL BACKEND — Phase 2 (full loop) DONE & multi-user verified
+
+Moved requests, opportunities, and bids onto the backend too (InquiryContext +
+HaulBidContext rewritten; atomic award via a dedicated server endpoint). Added
+DELETE endpoints for the "clear" actions. Consumers updated to async
+(BuyerRequest, SellerInquiryDetails accept/award, HaulerHaulOpportunity bid).
+
+- **Verified live across THREE separate accounts:** buyer@site.com requests →
+  seller@site.com sees + accepts → hauler@site.com bids → seller awards → hauler
+  sees "Locked / Winner". Every step crossed the network through the shared store
+  with correct per-user scoping. Console clean.
+- The 3-account test caught a real bug: awarded opportunities dropped out of the
+  hauler's view — fixed so haulers still see opps they've bid on.
+- **Only `messages` remains on localStorage** (minor one-way feature; server
+  endpoints exist, client swap is a small follow-up).
+- Follow-ups: real password hashing (prototype stores plaintext server-side) and
+  tightening a couple of per-resource write checks.
 
 
 

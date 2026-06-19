@@ -12,8 +12,7 @@ export default function SellerInquiryDetails() {
   const { inquiries, updateRequest } = useInquiry();
   const { listings } = useSellerListings();
 
-  const { opportunities, bids, setOpportunities, setBids, addOpportunity } =
-    useHaulBid();
+  const { opportunities, bids, addOpportunity, awardBid } = useHaulBid();
 
   const safeInquiries = Array.isArray(inquiries) ? inquiries : [];
   const safeListings = Array.isArray(listings) ? listings : [];
@@ -70,25 +69,23 @@ export default function SellerInquiryDetails() {
     );
   }, [safeBids, oppForAcceptedRequest]);
 
-  const handleAccept = (request) => {
+  const handleAccept = async (request) => {
     // One accepted request (and one haul opportunity) per listing.
     if (acceptedRequest) return;
-
-    updateRequest(request.id, { status: "accepted" });
 
     const alreadyHasOpp = safeOpps.some(
       (o) =>
         String(o.listingId) === String(listingId) ||
         String(o.requestId) === String(request.id)
     );
+
+    await updateRequest(request.id, { status: "accepted" });
     if (alreadyHasOpp) return;
 
     // Shape covers every consumer: HaulerDashboard (pickupLocation/dropoffAddress),
     // HaulerHaulOpportunity (pickup/dropoff), and this screen (listingId/requestId).
-    addOpportunity({
-      id: `opp_${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      status: "open",
+    // The server assigns id/createdAt/status/sellerEmail.
+    await addOpportunity({
       listingId: listingId,
       requestId: request.id,
       inquiryId: request.id,
@@ -99,7 +96,6 @@ export default function SellerInquiryDetails() {
       pickupLocation: listing?.location || "",
       dropoff: request.address || "",
       dropoffAddress: request.address || "",
-      // Coordinates (when geocoded) so haulers can see the haul distance.
       pickupLat: listing?.lat,
       pickupLng: listing?.lng,
       dropoffLat: request.lat,
@@ -109,22 +105,8 @@ export default function SellerInquiryDetails() {
   };
 
   const handleAward = (bidId) => {
-    if (!oppForAcceptedRequest) return;
-    if (isLocked) return;
-
-    const nextOpps = safeOpps.map((o) => {
-      if (String(o.id) !== String(oppForAcceptedRequest.id)) return o;
-      return { ...o, status: "awarded", awardedBidId: bidId };
-    });
-
-    const nextBids = safeBids.map((b) => {
-      if (String(b.oppId) !== String(oppForAcceptedRequest.id)) return b;
-      if (String(b.id) === String(bidId)) return { ...b, status: "awarded" };
-      return { ...b, status: "rejected" };
-    });
-
-    if (typeof setOpportunities === "function") setOpportunities(nextOpps);
-    if (typeof setBids === "function") setBids(nextBids);
+    if (!oppForAcceptedRequest || isLocked) return;
+    awardBid(oppForAcceptedRequest.id, bidId);
   };
 
   return (

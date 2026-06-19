@@ -8,7 +8,7 @@ export default function HaulerHaulOpportunity() {
   const { oppId } = useParams();
   const navigate = useNavigate();
 
-  const { opportunities, bids, setBids } = useHaulBid();
+  const { opportunities, bids, addBid } = useHaulBid();
 
   const safeOpps = Array.isArray(opportunities) ? opportunities : [];
   const safeBids = Array.isArray(bids) ? bids : [];
@@ -32,30 +32,31 @@ export default function HaulerHaulOpportunity() {
   const [availability, setAvailability] = useState("");
   const [notes, setNotes] = useState("");
 
-  const handleSubmit = (e) => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!opp) return;
-    if (isLocked) return;
+    if (!opp || isLocked) return;
 
     const cleanAmount = Number(amount);
     if (!Number.isFinite(cleanAmount) || cleanAmount <= 0) return;
 
-    const newBid = {
-      id: `${Date.now()}_${Math.random().toString(16).slice(2)}`,
-      oppId: opp.id,
-      amount: cleanAmount,
-      availability: availability || "",
-      notes: notes || "",
-      status: "pending",
-      createdAt: Date.now(),
-    };
-
-    const next = [newBid, ...safeBids];
-    if (typeof setBids === "function") setBids(next);
-
-    setAmount("");
-    setAvailability("");
-    setNotes("");
+    setSubmitting(true);
+    try {
+      await addBid({
+        oppId: opp.id,
+        amount: cleanAmount,
+        availability: availability || "",
+        notes: notes || "",
+      });
+      setAmount("");
+      setAvailability("");
+      setNotes("");
+    } catch (err) {
+      console.error("bid submit failed", err.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -168,8 +169,12 @@ export default function HaulerHaulOpportunity() {
                 rows={3}
                 disabled={isLocked}
               />
-              <button className="btn btn-primary" type="submit" disabled={isLocked}>
-                {isLocked ? "Locked" : "Submit Bid"}
+              <button
+                className="btn btn-primary"
+                type="submit"
+                disabled={isLocked || submitting}
+              >
+                {isLocked ? "Locked" : submitting ? "Submitting…" : "Submit Bid"}
               </button>
             </form>
           </div>
