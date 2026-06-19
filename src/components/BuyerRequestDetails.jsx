@@ -5,12 +5,44 @@ import BottomNav from "./BottomNav";
 import RouteMiniMap from "./RouteMiniMap";
 import { hasCoords } from "../lib/maps";
 import { useInquiry } from "./InquiryContext";
+import { useHaulBids } from "./HaulBidContext";
 
 function formatDate(iso) {
   if (!iso) return "Not set";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "Not set";
   return d.toLocaleString();
+}
+
+// Human-readable order status from the request + its haul opportunity.
+function orderStatus(request, opp) {
+  if (request.status === "declined") {
+    return { label: "Declined", tone: "draft", detail: "The seller declined this request." };
+  }
+  if (opp && opp.status === "awarded") {
+    const parts = [
+      opp.awardedHaulerName || "A hauler",
+      opp.awardedAmount ? `$${opp.awardedAmount}` : null,
+      opp.awardedAvailability || null,
+    ].filter(Boolean);
+    return {
+      label: "Hauler assigned",
+      tone: "active",
+      detail: `${parts.join(" • ")} — your delivery is arranged.`,
+    };
+  }
+  if (opp || request.status === "accepted") {
+    return {
+      label: "Arranging hauler",
+      tone: "active",
+      detail: "Accepted by the seller — haulers are bidding on the delivery.",
+    };
+  }
+  return {
+    label: "Awaiting seller",
+    tone: "draft",
+    detail: "Waiting for the seller to accept your request.",
+  };
 }
 
 function Row({ label, value }) {
@@ -26,7 +58,12 @@ export default function BuyerRequestDetails() {
   const navigate = useNavigate();
   const { state } = useLocation();
   const { removeRequest } = useInquiry();
+  const { opportunities } = useHaulBids();
   const request = state?.request;
+  const opp =
+    (Array.isArray(opportunities) ? opportunities : []).find(
+      (o) => String(o.requestId) === String(request?.id)
+    ) || null;
 
   const handleCancel = async () => {
     if (!request) return;
@@ -89,6 +126,32 @@ export default function BuyerRequestDetails() {
           <Row label="Notes" value={request.notes} />
           <Row label="Submitted" value={formatDate(request.createdAt)} />
         </GlassCard>
+
+        {(() => {
+          const s = orderStatus(request, opp);
+          return (
+            <GlassCard className="dashboard-card" style={{ marginTop: 12 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <div style={{ fontSize: 12, opacity: 0.6 }}>Order status</div>
+                <span
+                  className={`status-pill ${
+                    s.tone === "active" ? "status-active" : "status-draft"
+                  }`}
+                >
+                  {s.label}
+                </span>
+              </div>
+              <div style={{ marginTop: 8, fontSize: 14 }}>{s.detail}</div>
+            </GlassCard>
+          );
+        })()}
 
         {hasCoords(request) ? (
           <GlassCard className="dashboard-card" style={{ marginTop: 12 }}>

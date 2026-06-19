@@ -64,6 +64,21 @@ function withHauler(b) {
   const a = data.accounts[b.haulerEmail];
   return { ...b, haulerName: a?.name || "", haulerCompany: a?.company || "" };
 }
+// Attach the winning hauler + bid summary to an awarded opportunity so buyers
+// and sellers can see who's assigned without reading the bids list.
+function withAwarded(o) {
+  if (!o.awardedBidId) return o;
+  const bid = data.bids.find((b) => String(b.id) === String(o.awardedBidId));
+  if (!bid) return o;
+  const a = data.accounts[bid.haulerEmail];
+  return {
+    ...o,
+    awardedHaulerName: a?.name || "",
+    awardedHaulerCompany: a?.company || "",
+    awardedAmount: bid.amount,
+    awardedAvailability: bid.availability || "",
+  };
+}
 
 // Pulls the signed-in user's email from the Bearer token; null if not valid.
 function emailFromReq(req) {
@@ -280,13 +295,18 @@ app.get('/api/opportunities', requireAuth, (req, res) => {
   const myBidOppIds = new Set(
     data.bids.filter((b) => b.haulerEmail === req.userEmail).map((b) => String(b.oppId))
   );
+  // Buyers should see the opportunity created from their own request.
+  const myRequestIds = new Set(
+    data.requests.filter((r) => r.buyerEmail === req.userEmail).map((r) => String(r.id))
+  );
   const visible = data.opportunities.filter(
     (o) =>
       o.status === 'open' ||
       o.sellerEmail === req.userEmail ||
-      myBidOppIds.has(String(o.id))
+      myBidOppIds.has(String(o.id)) ||
+      myRequestIds.has(String(o.requestId))
   );
-  res.json(visible);
+  res.json(visible.map(withAwarded));
 });
 
 app.post('/api/opportunities', requireAuth, (req, res) => {
