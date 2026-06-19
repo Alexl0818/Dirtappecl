@@ -32,10 +32,16 @@ Node 20 installed at `~/.local/node-v20.18.1-darwin-x64/bin` (no system Node).
   `.env.example` documents setup. Verified live WITHOUT a key: fallback renders, publish
   still saves, console clean. The actual map-tile rendering needs your key to confirm.
 
-## 🔁 In progress / next (autonomous run continues)
+- **Final regression pass (Task #4) — DONE.** After auth + map + entry-point
+  changes, re-ran the entire loop live: buyer browse → request → seller accept →
+  haul opportunity → hauler dashboard. All green, console clean. Map fallback
+  screen verified (screenshot-confirmed).
 
-- **Bug sweep (Task #1):** a read-only audit subagent combed `src/`; folding in
-  remaining findings, then a full final verification pass of every flow.
+## 🔁 Still open
+
+- **Bug sweep (Task #1):** a read-only audit subagent is combing `src/` for any
+  remaining correctness issues; its findings will be folded in next.
+- **Map tiles:** add a Google Maps key (`.env.local`) to see the live map render.
 
 ## ⚠️ Needs Alex (not blocking the build)
 
