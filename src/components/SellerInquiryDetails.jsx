@@ -109,6 +109,10 @@ export default function SellerInquiryDetails() {
     awardBid(oppForAcceptedRequest.id, bidId);
   };
 
+  const handleDecline = (request) => {
+    updateRequest(request.id, { status: "declined" });
+  };
+
   return (
     <div className="page">
       <div className="page-header">
@@ -170,17 +174,24 @@ export default function SellerInquiryDetails() {
                     <span style={{ fontWeight: 700, color: "#4ade80" }}>
                       ✓ Accepted — haul opportunity created
                     </span>
+                  ) : r.status === "declined" ? (
+                    <span style={{ opacity: 0.7, fontSize: 13 }}>Declined</span>
                   ) : acceptedRequest ? (
                     <span style={{ opacity: 0.7, fontSize: 13 }}>
                       Another request on this listing was accepted.
                     </span>
                   ) : (
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => handleAccept(r)}
-                    >
-                      Accept request
-                    </button>
+                    <>
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => handleAccept(r)}
+                      >
+                        Accept request
+                      </button>
+                      <button className="btn" onClick={() => handleDecline(r)}>
+                        Decline
+                      </button>
+                    </>
                   )}
 
                   <button
@@ -190,7 +201,7 @@ export default function SellerInquiryDetails() {
                         state: {
                           inquiry: {
                             ...r,
-                            buyerName: "Buyer",
+                            buyerName: r.buyerName || "Buyer",
                             location: r.address,
                           },
                         },
