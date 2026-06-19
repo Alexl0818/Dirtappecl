@@ -1,8 +1,5 @@
 import React from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
-import { APIProvider } from "@vis.gl/react-google-maps";
-
-import { GMAPS_KEY, hasMapsKey } from "./lib/maps";
 
 import { AuthProvider, useAuth } from "./components/AuthContext";
 import { InquiryProvider } from "./components/InquiryContext";
@@ -162,7 +159,7 @@ function AppInner() {
 }
 
 export default function App() {
-  const tree = (
+  return (
     <AuthProvider>
       <InquiryProvider>
         <SellerListingProvider>
@@ -176,15 +173,5 @@ export default function App() {
         </SellerListingProvider>
       </InquiryProvider>
     </AuthProvider>
-  );
-
-  // Load the Google Maps script app-wide only when a key is configured, so
-  // geocoding works in the listing/request forms and the map screen renders.
-  return hasMapsKey() ? (
-    <APIProvider apiKey={GMAPS_KEY} libraries={["geocoding", "marker"]}>
-      {tree}
-    </APIProvider>
-  ) : (
-    tree
   );
 }

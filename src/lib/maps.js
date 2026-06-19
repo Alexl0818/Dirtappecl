@@ -1,50 +1,40 @@
-// Central place for Google Maps wiring.
+// Map + geocoding helpers.
 //
-// The API key is read from VITE_GOOGLE_MAPS_API_KEY (put it in a .env.local
-// file at the project root, then restart the dev server). When the key is
-// absent, the app degrades gracefully: map screens show a setup fallback and
-// geocoding silently no-ops, so listings/requests still save (just without
-// coordinates).
-
-export const GMAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
-
-export function hasMapsKey() {
-  return Boolean(GMAPS_KEY);
-}
+// The map uses Leaflet + OpenStreetMap tiles (free, no API key, no billing).
+// Geocoding (address -> lat/lng) uses the free OpenStreetMap Nominatim service.
+// Nominatim's usage policy asks for low volume (<= ~1 request/sec), which fits
+// one lookup per listing/request creation. Everything is best-effort: if a
+// lookup fails, records still save without coordinates.
 
 // Default map center (continental US) used when there's nothing to show yet.
 export const DEFAULT_CENTER = { lat: 39.5, lng: -98.35 };
 export const DEFAULT_ZOOM = 4;
 
-// Geocode a free-text address into { lat, lng, formatted } using the Maps JS
-// Geocoder. Requires the Google Maps script to already be loaded (i.e. a key
-// is present and <APIProvider> has mounted). Returns null on any failure so
-// callers can treat it as best-effort.
+// Geocode a free-text address into { lat, lng, formatted } via Nominatim.
+// Returns null on any failure so callers can treat it as best-effort.
 export async function geocodeAddress(address) {
   const text = String(address || "").trim();
   if (!text) return null;
-  if (typeof window === "undefined" || !window.google?.maps) return null;
 
   try {
-    // The geocoding library may not be loaded yet — pull it in on demand so
-    // this works with a valid key regardless of how the script was initialized.
-    let Geocoder = window.google.maps.Geocoder;
-    if (!Geocoder && typeof window.google.maps.importLibrary === "function") {
-      const lib = await window.google.maps.importLibrary("geocoding");
-      Geocoder = lib?.Geocoder;
-    }
-    if (!Geocoder) return null;
+    const url =
+      "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" +
+      encodeURIComponent(text);
 
-    const geocoder = new Geocoder();
-    const { results } = await geocoder.geocode({ address: text });
-    const hit = results?.[0];
-    if (!hit?.geometry?.location) return null;
-    const loc = hit.geometry.location;
-    return {
-      lat: typeof loc.lat === "function" ? loc.lat() : loc.lat,
-      lng: typeof loc.lng === "function" ? loc.lng() : loc.lng,
-      formatted: hit.formatted_address || text,
-    };
+    const res = await fetch(url, {
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) return null;
+
+    const results = await res.json();
+    const hit = Array.isArray(results) ? results[0] : null;
+    if (!hit) return null;
+
+    const lat = Number(hit.lat);
+    const lng = Number(hit.lon);
+    if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+
+    return { lat, lng, formatted: hit.display_name || text };
   } catch (e) {
     console.warn("geocodeAddress failed:", e?.message || e);
     return null;

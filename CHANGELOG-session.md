@@ -8,6 +8,20 @@ Node 20 installed at `~/.local/node-v20.18.1-darwin-x64/bin` (no system Node).
 
 ---
 
+## 🗺️ Geo map switched to free OpenStreetMap (no key needed)
+
+Alex opted to switch from Google Maps to **Leaflet + OpenStreetMap** (free, no API
+key, no billing) — Google required his account + billing, which can't be provisioned
+for him. Done & **verified live**:
+- `BuyerMapView` now renders a real Leaflet/OSM map with listing markers, popups
+  ("View details"), and auto-fit-to-markers. Verified: tiles load, 2 markers from
+  real geocoded listings, popup works, console clean. (Screenshots captured.)
+- Geocoding switched to free **Nominatim**. Verified live: "Asheville, NC" geocoded
+  to lat/lng on listing creation, marker appeared on the map.
+- Removed `@vis.gl/react-google-maps` + the `APIProvider` wrapper + `.env.example`.
+  No env key required anymore. Data model unchanged (`lat`/`lng`/`geoFormatted`), so
+  Google can be swapped back later if ever wanted.
+
 ## 🧪 Verified live this session (full coverage)
 
 Complete loop, exercised in the running app with the auth guard + all fixes in place:
@@ -66,13 +80,13 @@ Data persists across a dev-server restart. Console clean at every step.
 
 ## 🔁 Still open
 
-- **Map tiles:** add a Google Maps key (`.env.local`) to see the live map render.
 - **Per-user data:** listings/requests are global in localStorage (any signed-in
   user sees all). Real per-account scoping is a backend concern (next milestone).
 
-## ⚠️ Needs Alex (not blocking the build)
+## ⚠️ Needs Alex
 
-- **Google Maps API key.** The map is built to read `VITE_GOOGLE_MAPS_API_KEY` from a `.env.local` file (gitignored). Until a key is added it shows a friendly "add your key" fallback. To activate: Google Cloud → enable **Maps JavaScript API** + **Geocoding API** → create an API key → put `VITE_GOOGLE_MAPS_API_KEY=...` in `.env.local` → restart the dev server.
+- Nothing required for the map anymore — it's free OpenStreetMap, works out of the
+  box. (You'll just sign up in your browser to get past the login gate.)
 
 ## Earlier this session (already shipped)
 

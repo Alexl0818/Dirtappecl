@@ -1,17 +1,47 @@
 // src/components/BuyerMapView.jsx
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Map, Marker, InfoWindow } from "@vis.gl/react-google-maps";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
 import GlassCard from "./GlassCard";
 import BottomNav from "./BottomNav";
 import { useSellerListings } from "./SellerListingContext";
-import { hasMapsKey, hasCoords, DEFAULT_CENTER, DEFAULT_ZOOM } from "../lib/maps";
+import { hasCoords, DEFAULT_CENTER, DEFAULT_ZOOM } from "../lib/maps";
+
+// Leaflet's default marker images don't resolve under bundlers — wire them up
+// explicitly so markers render.
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
+
+// Pans/zooms the map to fit the current markers whenever they change.
+function FitToMarkers({ points }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!points.length) return;
+    if (points.length === 1) {
+      map.setView([points[0].lat, points[0].lng], 11);
+      return;
+    }
+    const bounds = L.latLngBounds(points.map((p) => [p.lat, p.lng]));
+    map.fitBounds(bounds, { padding: [40, 40] });
+  }, [points, map]);
+  return null;
+}
 
 export default function BuyerMapView() {
   const navigate = useNavigate();
   const seller = useSellerListings();
-  const [selected, setSelected] = useState(null);
 
   const active = useMemo(
     () =>
@@ -22,11 +52,6 @@ export default function BuyerMapView() {
   );
   const mapped = useMemo(() => active.filter(hasCoords), [active]);
   const unmappedCount = active.length - mapped.length;
-
-  const center = mapped[0]
-    ? { lat: mapped[0].lat, lng: mapped[0].lng }
-    : DEFAULT_CENTER;
-  const zoom = mapped[0] ? 9 : DEFAULT_ZOOM;
 
   return (
     <div className="app-root">
@@ -41,126 +66,83 @@ export default function BuyerMapView() {
           </button>
         </div>
 
-        {!hasMapsKey() ? (
-          <MapSetupFallback active={active} navigate={navigate} />
-        ) : (
-          <>
-            <div
-              style={{
-                width: "100%",
-                height: "68vh",
-                borderRadius: 16,
-                overflow: "hidden",
-                border: "1px solid rgba(148,163,184,0.4)",
-              }}
-            >
-              <Map
-                defaultCenter={center}
-                defaultZoom={zoom}
-                gestureHandling="greedy"
-                disableDefaultUI={false}
-                clickableIcons={false}
-              >
-                {mapped.map((l) => (
-                  <Marker
-                    key={l.id}
-                    position={{ lat: l.lat, lng: l.lng }}
-                    title={`${l.material} — ${l.quantity} ${l.unit}`}
-                    onClick={() => setSelected(l)}
-                  />
-                ))}
+        <div
+          style={{
+            width: "100%",
+            height: "68vh",
+            borderRadius: 16,
+            overflow: "hidden",
+            border: "1px solid rgba(148,163,184,0.4)",
+          }}
+        >
+          <MapContainer
+            center={[DEFAULT_CENTER.lat, DEFAULT_CENTER.lng]}
+            zoom={DEFAULT_ZOOM}
+            style={{ height: "100%", width: "100%" }}
+            scrollWheelZoom
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <FitToMarkers points={mapped} />
 
-                {selected && hasCoords(selected) ? (
-                  <InfoWindow
-                    position={{ lat: selected.lat, lng: selected.lng }}
-                    onCloseClick={() => setSelected(null)}
-                  >
-                    <div style={{ color: "#111827", maxWidth: 200 }}>
-                      <div style={{ fontWeight: 700, marginBottom: 2 }}>
-                        {selected.material} — {selected.quantity} {selected.unit}
-                      </div>
-                      <div style={{ fontSize: 12, marginBottom: 2 }}>
-                        {selected.location}
-                      </div>
-                      {selected.price ? (
-                        <div style={{ fontSize: 12, marginBottom: 6 }}>
-                          Price: {selected.price}
-                        </div>
-                      ) : null}
-                      <button
-                        style={{
-                          fontSize: 12,
-                          padding: "4px 8px",
-                          borderRadius: 6,
-                          border: "none",
-                          background: "#16a34a",
-                          color: "white",
-                          cursor: "pointer",
-                        }}
-                        onClick={() => navigate(`/buyer/details/${selected.id}`)}
-                      >
-                        View details
-                      </button>
+            {mapped.map((l) => (
+              <Marker key={l.id} position={[l.lat, l.lng]}>
+                <Popup>
+                  <div style={{ minWidth: 160 }}>
+                    <div style={{ fontWeight: 700, marginBottom: 2 }}>
+                      {l.material} — {l.quantity} {l.unit}
                     </div>
-                  </InfoWindow>
-                ) : null}
-              </Map>
-            </div>
+                    <div style={{ fontSize: 12, marginBottom: 2 }}>
+                      {l.location}
+                    </div>
+                    {l.price ? (
+                      <div style={{ fontSize: 12, marginBottom: 6 }}>
+                        Price: {l.price}
+                      </div>
+                    ) : null}
+                    <button
+                      style={{
+                        fontSize: 12,
+                        padding: "4px 8px",
+                        borderRadius: 6,
+                        border: "none",
+                        background: "#16a34a",
+                        color: "white",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => navigate(`/buyer/details/${l.id}`)}
+                    >
+                      View details
+                    </button>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        </div>
 
-            <p style={{ marginTop: 10, fontSize: 12, opacity: 0.8 }}>
-              {mapped.length === 0
-                ? "No mapped listings yet. New listings appear here once their location is recognized."
-                : `Showing ${mapped.length} listing${mapped.length === 1 ? "" : "s"} on the map.`}
-              {unmappedCount > 0
-                ? ` (${unmappedCount} without map coordinates.)`
-                : ""}
-            </p>
-          </>
-        )}
+        <p style={{ marginTop: 10, fontSize: 12, opacity: 0.8 }}>
+          {mapped.length === 0
+            ? "No mapped listings yet. New listings appear here once their location is recognized."
+            : `Showing ${mapped.length} listing${mapped.length === 1 ? "" : "s"} on the map.`}
+          {unmappedCount > 0
+            ? ` (${unmappedCount} without map coordinates.)`
+            : ""}
+        </p>
+
+        {active.length === 0 ? (
+          <GlassCard className="dashboard-card" style={{ marginTop: 12 }}>
+            <div className="card-description">
+              No active listings yet. Once sellers post material, it shows up
+              here on the map.
+            </div>
+          </GlassCard>
+        ) : null}
       </main>
 
       <BottomNav />
     </div>
-  );
-}
-
-function MapSetupFallback({ active, navigate }) {
-  return (
-    <>
-      <GlassCard className="dashboard-card" style={{ marginBottom: 12 }}>
-        <div className="card-title">Map needs a Google Maps key</div>
-        <div className="card-description">
-          Add <code>VITE_GOOGLE_MAPS_API_KEY</code> to a <code>.env.local</code>{" "}
-          file at the project root and restart the dev server to enable the live
-          map. Until then, here are the active listings.
-        </div>
-      </GlassCard>
-
-      {active.length === 0 ? (
-        <GlassCard className="dashboard-card">
-          <div className="card-description">No active listings yet.</div>
-        </GlassCard>
-      ) : (
-        <div className="dashboard-grid">
-          {active.map((l, idx) => (
-            <GlassCard key={l?.id ?? `row_${idx}`} className="dashboard-card">
-              <div className="card-title">
-                {l.material} — {l.quantity} {l.unit}
-              </div>
-              <div className="card-description" style={{ marginTop: 6 }}>
-                {l.location || "Location not set"}
-              </div>
-              <button
-                className="primary-button"
-                style={{ marginTop: 10 }}
-                onClick={() => navigate(`/buyer/details/${l.id}`)}
-              >
-                View details
-              </button>
-            </GlassCard>
-          ))}
-        </div>
-      )}
-    </>
   );
 }
