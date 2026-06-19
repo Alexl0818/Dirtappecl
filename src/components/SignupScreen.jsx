@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import GlassCard from "./GlassCard";
 import { useAuth } from "./AuthContext";
 
 const SignupScreen = () => {
@@ -32,112 +33,92 @@ const SignupScreen = () => {
     navigate("/mode");
   };
 
-  const handleBack = () => navigate("/");
-
   return (
-    <div style={{ padding: "16px", maxWidth: 480, margin: "0 auto" }}>
-      <h1 style={{ marginBottom: "16px" }}>Sign Up</h1>
-
-      {error ? (
-        <div className="form-error" style={{ marginBottom: 12 }}>
-          {error}
+    <div className="app-root">
+      <main className="app-main">
+        <div className="dashboard-header">
+          <div>
+            <h2 className="section-title">Sign Up</h2>
+            <p className="section-subtitle">Create your SoilConnect account.</p>
+          </div>
         </div>
-      ) : null}
 
-      <div style={{ marginBottom: "12px" }}>
-        <label style={labelStyle}>Name</label>
-        <input
-          type="text"
-          placeholder="Your name"
-          style={inputStyle}
-          value={form.name}
-          onChange={setField("name")}
-        />
-      </div>
+        <GlassCard className="dashboard-card">
+          <div className="form-grid">
+            {error ? <div className="form-error">{error}</div> : null}
 
-      <div style={{ marginBottom: "12px" }}>
-        <label style={labelStyle}>Email</label>
-        <input
-          type="email"
-          placeholder="you@example.com"
-          style={inputStyle}
-          value={form.email}
-          onChange={setField("email")}
-          autoCapitalize="none"
-        />
-      </div>
+            <div className="form-field">
+              <div className="field-label">Name</div>
+              <input
+                className="field-input"
+                placeholder="Your name"
+                value={form.name}
+                onChange={setField("name")}
+              />
+            </div>
 
-      <div style={{ marginBottom: "12px" }}>
-        <label style={labelStyle}>Password</label>
-        <input
-          type="password"
-          placeholder="At least 6 characters"
-          style={inputStyle}
-          value={form.password}
-          onChange={setField("password")}
-          onKeyDown={(e) => e.key === "Enter" && handleCreateAccount()}
-        />
-      </div>
+            <div className="form-field">
+              <div className="field-label">Email</div>
+              <input
+                className="field-input"
+                type="email"
+                autoCapitalize="none"
+                placeholder="you@example.com"
+                value={form.email}
+                onChange={setField("email")}
+              />
+            </div>
 
-      <div style={{ marginBottom: "20px" }}>
-        <label style={labelStyle}>Company (optional)</label>
-        <input
-          type="text"
-          placeholder="Company name"
-          style={inputStyle}
-          value={form.company}
-          onChange={setField("company")}
-        />
-      </div>
+            <div className="form-field">
+              <div className="field-label">Password</div>
+              <input
+                className="field-input"
+                type="password"
+                placeholder="At least 6 characters"
+                value={form.password}
+                onChange={setField("password")}
+                onKeyDown={(e) => e.key === "Enter" && handleCreateAccount()}
+              />
+            </div>
 
-      <button
-        style={primaryButtonStyle}
-        onClick={handleCreateAccount}
-        disabled={submitting}
-      >
-        Create account
-      </button>
+            <div className="form-field">
+              <div className="field-label">Company (optional)</div>
+              <input
+                className="field-input"
+                placeholder="Company name"
+                value={form.company}
+                onChange={setField("company")}
+              />
+            </div>
 
-      <button style={secondaryButtonStyle} onClick={handleBack}>
-        Back to Welcome
-      </button>
+            <button
+              className="primary-button full-width"
+              onClick={handleCreateAccount}
+              disabled={submitting}
+            >
+              {submitting ? "Creating…" : "Create account"}
+            </button>
+          </div>
+        </GlassCard>
+
+        <p style={{ marginTop: 16, fontSize: 13, opacity: 0.85, textAlign: "center" }}>
+          Already have an account?{" "}
+          <span
+            style={{ color: "#86efac", cursor: "pointer", textDecoration: "underline" }}
+            onClick={() => navigate("/login")}
+          >
+            Log in
+          </span>
+        </p>
+
+        <div style={{ marginTop: 12, textAlign: "center" }}>
+          <button className="ghost-button" onClick={() => navigate("/")}>
+            Back to Welcome
+          </button>
+        </div>
+      </main>
     </div>
   );
-};
-
-const labelStyle = { display: "block", marginBottom: "4px" };
-
-const inputStyle = {
-  width: "100%",
-  padding: "10px 12px",
-  borderRadius: "8px",
-  border: "1px solid #d1d5db",
-  fontSize: "14px",
-};
-
-const primaryButtonStyle = {
-  display: "block",
-  width: "100%",
-  padding: "12px 16px",
-  marginBottom: "12px",
-  fontSize: "16px",
-  borderRadius: "8px",
-  border: "none",
-  cursor: "pointer",
-  backgroundColor: "#2563eb",
-  color: "white",
-};
-
-const secondaryButtonStyle = {
-  display: "block",
-  width: "100%",
-  padding: "10px 16px",
-  fontSize: "14px",
-  borderRadius: "8px",
-  border: "none",
-  cursor: "pointer",
-  backgroundColor: "#e5e7eb",
-  color: "#111827",
 };
 
 export default SignupScreen;
