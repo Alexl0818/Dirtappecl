@@ -1,14 +1,26 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import GlassCard from "./GlassCard";
 import BottomNav from "./BottomNav";
 import { useSellerListings } from "./SellerListingContext";
+import { useInquiry } from "./InquiryContext";
 
 export default function ListingDetails() {
   const navigate = useNavigate();
   const seller = useSellerListings();
+  const { requests } = useInquiry();
 
   const listings = Array.isArray(seller.listings) ? seller.listings : [];
+
+  // Count buyer requests per listing so sellers see where the activity is.
+  const requestCounts = useMemo(() => {
+    const map = {};
+    (Array.isArray(requests) ? requests : []).forEach((r) => {
+      const key = String(r?.listingId);
+      map[key] = (map[key] || 0) + 1;
+    });
+    return map;
+  }, [requests]);
 
   return (
     <div className="app-root">
@@ -45,6 +57,7 @@ export default function ListingDetails() {
               const location = l?.location ?? "";
               const status = l?.status ?? "active";
               const createdAt = l?.createdAt ? new Date(l.createdAt).toLocaleString() : "";
+              const reqCount = requestCounts[String(id)] || 0;
 
               return (
                 <GlassCard key={id} className="dashboard-card">
@@ -88,7 +101,7 @@ export default function ListingDetails() {
                       className="primary-button"
                       onClick={() => navigate(`/seller/inquiry/${id}`)}
                     >
-                      View Requests
+                      View Requests{reqCount ? ` (${reqCount})` : ""}
                     </button>
 
                     <button

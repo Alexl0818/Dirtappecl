@@ -22,6 +22,12 @@ for him. Done & **verified live**:
   No env key required anymore. Data model unchanged (`lat`/`lng`/`geoFormatted`), so
   Google can be swapped back later if ever wanted.
 
+## 🔔 Seller request-count badges (new)
+
+Each card on the seller's "Your Listings" page now shows the number of buyer
+requests on its "View Requests (N)" button, so sellers see which listings have
+activity without opening each. Verified live.
+
 ## 📊 Live KPI dashboards (new)
 
 The three role landing pages were nav-cards only; now each shows at-a-glance live
