@@ -1,5 +1,20 @@
 # Session Changelog — Hardening & Geo Map
 
+## 🤝 Marketplace workflow features (post-backend)
+
+Real two-sided workflow on top of the multi-user backend:
+- **Counterparty identity:** "Posted by [seller]" on listings, "From: [buyer]" on
+  requests, "Hauler: [name]" on bids (server-enriched, no stored duplication).
+- **Request cancellation:** buyers can cancel an open request (Request Details).
+- **Seller decline:** sellers can decline a request (status → declined).
+- **Hauler "Your Bids / Jobs won":** hauler dashboard now has hauler-centric KPIs
+  (open / your bids / jobs won), an Open-opportunities section, and a Your Bids
+  list showing each bid's status (Pending / Won / Not selected) with route + amount.
+All verified live; console clean. (Per-user scoping keeps each account's view to
+its own data.)
+
+
+
 ## 🎨 UI CONSISTENCY — every screen now uses one design system
 
 Brought all remaining raw/flat screens into the glass design language so the app
