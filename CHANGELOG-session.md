@@ -22,6 +22,13 @@ for him. Done & **verified live**:
   No env key required anymore. Data model unchanged (`lat`/`lng`/`geoFormatted`), so
   Google can be swapped back later if ever wanted.
 
+## 🛣️ Pickup→dropoff route mini-map (new)
+
+The hauler opportunity page now shows a small Leaflet map with pickup + dropoff
+markers connected by a route line (reusable `RouteMiniMap` component; shared
+`leafletSetup` for marker icons). Renders only when coords are present. Verified
+live: Raleigh→Charlotte route drawn, console clean.
+
 ## 🔔 Seller request-count badges (new)
 
 Each card on the seller's "Your Listings" page now shows the number of buyer

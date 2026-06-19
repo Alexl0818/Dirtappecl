@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useHaulBid } from "./HaulBidContext.jsx";
 import { distanceMiles } from "../lib/maps";
+import RouteMiniMap from "./RouteMiniMap";
 
 export default function HaulerHaulOpportunity() {
   const { oppId } = useParams();
@@ -104,6 +105,21 @@ export default function HaulerHaulOpportunity() {
                   </div>
                 ) : null;
               })()}
+            </div>
+
+            <div style={{ marginTop: 12 }}>
+              <RouteMiniMap
+                pickup={{
+                  lat: opp.pickupLat,
+                  lng: opp.pickupLng,
+                  label: `Pickup: ${opp.pickup || opp.location || ""}`,
+                }}
+                dropoff={{
+                  lat: opp.dropoffLat,
+                  lng: opp.dropoffLng,
+                  label: `Dropoff: ${opp.dropoff || opp.address || ""}`,
+                }}
+              />
             </div>
 
             {isLocked && (
