@@ -49,6 +49,13 @@ export function InquiryProvider({ children }) {
     return updated;
   }
 
+  async function removeRequest(id) {
+    await api.del(`/requests/${id}`);
+    setRequests((prev) =>
+      (Array.isArray(prev) ? prev : []).filter((r) => String(r.id) !== String(id))
+    );
+  }
+
   async function clearRequests() {
     const mine = requests.filter((r) => r.buyerEmail === user?.email);
     await Promise.all(mine.map((r) => api.del(`/requests/${r.id}`).catch(() => {})));
@@ -61,6 +68,7 @@ export function InquiryProvider({ children }) {
       inquiries: requests, // alias: seller screens read these as "inquiries"
       addRequest,
       updateRequest,
+      removeRequest,
       clearRequests,
       setRequests,
       refresh,

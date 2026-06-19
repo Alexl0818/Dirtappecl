@@ -4,6 +4,7 @@ import GlassCard from "./GlassCard";
 import BottomNav from "./BottomNav";
 import RouteMiniMap from "./RouteMiniMap";
 import { hasCoords } from "../lib/maps";
+import { useInquiry } from "./InquiryContext";
 
 function formatDate(iso) {
   if (!iso) return "Not set";
@@ -24,7 +25,19 @@ function Row({ label, value }) {
 export default function BuyerRequestDetails() {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const { removeRequest } = useInquiry();
   const request = state?.request;
+
+  const handleCancel = async () => {
+    if (!request) return;
+    if (!window.confirm("Cancel this request? This can't be undone.")) return;
+    try {
+      await removeRequest(request.id);
+    } catch (e) {
+      console.error("cancel request failed", e.message);
+    }
+    navigate("/buyer/requests");
+  };
 
   if (!request) {
     return (
@@ -89,13 +102,22 @@ export default function BuyerRequestDetails() {
           </GlassCard>
         ) : null}
 
-        <div style={{ marginTop: 16 }}>
+        <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button
             className="ghost-button"
             onClick={() => navigate("/buyer/requests")}
           >
             Back to requests
           </button>
+          {request.status !== "accepted" ? (
+            <button
+              className="ghost-button"
+              style={{ borderColor: "rgba(248,113,113,0.7)", color: "#fca5a5" }}
+              onClick={handleCancel}
+            >
+              Cancel request
+            </button>
+          ) : null}
         </div>
       </main>
 
