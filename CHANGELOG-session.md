@@ -1,5 +1,19 @@
 # Session Changelog — Hardening & Geo Map
 
+## 🎨 UI CONSISTENCY — every screen now uses one design system
+
+Brought all remaining raw/flat screens into the glass design language so the app
+looks uniform end-to-end:
+- **Landing pages uniform:** shared `.nav-card` (even height + hover), Mode Select
+  rebuilt as glass cards, seller dashboard width matched to the others.
+- **Welcome** rebuilt as a branded hero on the topo background.
+- **Your Requests** + **Request Details**: glass cards, status pills, bottom nav.
+- **Login** + **Signup**: glass card forms with dark inputs (were light forms).
+- **Message thread**: glass cards, themed bubbles, styled composer.
+All verified live (mobile + desktop), console clean throughout.
+
+
+
 ## 🚀 REAL BACKEND — Phase 1 (auth + listings) DONE & multi-user verified
 
 The app is no longer single-device. Extended the existing Express server into a
