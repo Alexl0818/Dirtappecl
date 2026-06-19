@@ -23,6 +23,26 @@ app.use((req, res, next) => {
 const newId = (prefix) => `${prefix}_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
 const isEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || '').trim());
 
+// Password hashing (scrypt, built into Node — no dependencies).
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(String(password), salt, 64).toString('hex');
+  return `scrypt$${salt}$${hash}`;
+}
+
+function verifyPassword(password, stored) {
+  if (!stored) return false;
+  if (stored.startsWith('scrypt$')) {
+    const [, salt, hash] = stored.split('$');
+    const test = crypto.scryptSync(String(password), salt, 64).toString('hex');
+    const a = Buffer.from(hash, 'hex');
+    const b = Buffer.from(test, 'hex');
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+  }
+  // Legacy plaintext (pre-hashing accounts) — compared directly, then upgraded.
+  return stored === password;
+}
+
 // Strip the password before sending an account to the client.
 function publicUser(account) {
   if (!account) return null;
@@ -63,7 +83,7 @@ app.post('/api/auth/signup', (req, res) => {
   const account = {
     name: name.trim(),
     email: cleanEmail,
-    password, // prototype only — hash this with a real backend
+    password: hashPassword(password),
     company: (company || '').trim(),
     phone: '',
     region: '',
@@ -82,8 +102,12 @@ app.post('/api/auth/login', (req, res) => {
   const cleanEmail = String(email || '').trim().toLowerCase();
   if (!isEmail(cleanEmail)) return res.status(400).json({ error: 'Please enter a valid email address.' });
   const account = data.accounts[cleanEmail];
-  if (!account || account.password !== password) {
+  if (!account || !verifyPassword(password, account.password)) {
     return res.status(401).json({ error: 'Email or password is incorrect.' });
+  }
+  // Transparently upgrade any legacy plaintext password to a hash on login.
+  if (!account.password.startsWith('scrypt$')) {
+    account.password = hashPassword(password);
   }
   const token = crypto.randomUUID();
   data.sessions[token] = cleanEmail;

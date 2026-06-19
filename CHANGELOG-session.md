@@ -34,8 +34,10 @@ DELETE endpoints for the "clear" actions. Consumers updated to async
   live: a seller's message persists server-side and reloads from the server when
   the thread is reopened. **No data store uses localStorage anymore** — only the
   session token does.
-- Follow-ups: real password hashing (prototype stores plaintext server-side) and
-  tightening a couple of per-resource write checks.
+- **Password hashing added** (scrypt, built into Node — no deps). New signups are
+  hashed; legacy plaintext accounts transparently upgrade to a hash on next login.
+  Verified: new + legacy logins work, wrong passwords rejected, stored values are
+  `scrypt$…`. Remaining follow-up: tighten a couple of per-resource write checks.
 
 **Dev runs as one command:** Vite now auto-starts the API server via a dev-only
 plugin (`vite.config.js`), so `npm run dev` (or just `vite`) boots both UI and
