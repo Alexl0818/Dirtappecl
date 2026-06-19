@@ -8,6 +8,15 @@ Node 20 installed at `~/.local/node-v20.18.1-darwin-x64/bin` (no system Node).
 
 ---
 
+## 🧪 Verified live this session (full coverage)
+
+Complete loop, exercised in the running app with the auth guard + all fixes in place:
+**sign up / log in → seller posts listing → buyer browses → listing details →
+request (prefilled) → seller sees request → accept → haul opportunity created →
+hauler places bid → seller awards bid → hauler side shows "Locked".** Auth guard
+verified both directions (logged-out bounces to login, logged-in gets access).
+Data persists across a dev-server restart. Console clean at every step.
+
 ## ✅ Done & verified (this hardening run)
 
 - **Fixed unstyled core screens.** `.page`, `.page-header`, `.btn`, `.btn-primary`, `.input`, plus form-error classes were used by `SellerInquiryDetails` and `HaulerHaulOpportunity` but defined nowhere — those screens rendered as raw HTML. Added all classes to `App.css`. Verified live: the seller inquiry screen now renders proper glass cards + styled buttons.
