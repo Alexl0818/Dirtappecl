@@ -1,7 +1,10 @@
 // Tiny JSON-file datastore for the Site-Sync backend.
 // Not built for scale — a single-process, file-backed store that's perfect for a
-// prototype and works on Replit. Swap for Postgres/Supabase later without
+// prototype and works on Replit (Run button). Swap for a real DB later without
 // touching the API surface.
+//
+// Durability: writes are atomic (temp file + rename) so a crash mid-write can't
+// corrupt the store, and any pending write is flushed synchronously on shutdown.
 
 import fs from "fs";
 import path from "path";
@@ -9,6 +12,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_FILE = path.join(__dirname, "data.json");
+const TMP_FILE = DATA_FILE + ".tmp";
 
 const EMPTY = {
   accounts: {}, // email -> { name, email, password, company, phone, region, roles, createdAt }
@@ -33,15 +37,42 @@ try {
 }
 
 let timer = null;
-export function save() {
-  if (timer) clearTimeout(timer);
-  timer = setTimeout(() => {
-    try {
-      fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-    } catch (e) {
-      console.error("db: failed to save data.json:", e.message);
-    }
-  }, 50);
+let dirty = false;
+
+function writeNow() {
+  try {
+    fs.writeFileSync(TMP_FILE, JSON.stringify(data, null, 2));
+    fs.renameSync(TMP_FILE, DATA_FILE); // atomic on the same filesystem
+    dirty = false;
+  } catch (e) {
+    console.error("db: failed to save data.json:", e.message);
+  }
 }
+
+export function save() {
+  dirty = true;
+  if (timer) clearTimeout(timer);
+  timer = setTimeout(writeNow, 50);
+}
+
+// Write any pending changes immediately (used on shutdown).
+export function flush() {
+  if (timer) {
+    clearTimeout(timer);
+    timer = null;
+  }
+  if (dirty) writeNow();
+}
+
+// Don't lose buffered writes when the process is told to stop.
+process.on("exit", flush);
+process.on("SIGINT", () => {
+  flush();
+  process.exit(0);
+});
+process.on("SIGTERM", () => {
+  flush();
+  process.exit(0);
+});
 
 export { data };
