@@ -194,6 +194,12 @@ export default function BuyerBrowseListings() {
                     {location}
                   </div>
 
+                  {l?.sellerCompany || l?.sellerName ? (
+                    <div style={{ marginTop: 4, fontSize: "0.78rem", opacity: 0.7 }}>
+                      Posted by {l.sellerCompany || l.sellerName}
+                    </div>
+                  ) : null}
+
                   {dist != null ? (
                     <div style={{ marginTop: 6, fontSize: "0.85rem", color: "rgb(74,222,128)", fontWeight: 600 }}>
                       ~{Math.round(dist)} mi away

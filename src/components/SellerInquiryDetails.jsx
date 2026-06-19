@@ -145,6 +145,11 @@ export default function SellerInquiryDetails() {
 
                 <div style={{ marginTop: 6, opacity: 0.9, fontSize: 13 }}>
                   <div>
+                    <strong>From:</strong>{" "}
+                    {r.buyerName || r.buyerEmail || "Buyer"}
+                    {r.buyerCompany ? ` (${r.buyerCompany})` : ""}
+                  </div>
+                  <div>
                     <strong>Address:</strong> {r.address || "—"}
                   </div>
                   <div>
@@ -289,7 +294,14 @@ export default function SellerInquiryDetails() {
                         </div>
 
                         <div style={{ marginTop: 6, opacity: 0.9, fontSize: 13 }}>
-                          <strong>Notes:</strong> {b.notes || "—"}
+                          <div>
+                            <strong>Hauler:</strong>{" "}
+                            {b.haulerName || b.haulerEmail || "Hauler"}
+                            {b.haulerCompany ? ` (${b.haulerCompany})` : ""}
+                          </div>
+                          <div>
+                            <strong>Notes:</strong> {b.notes || "—"}
+                          </div>
                         </div>
                       </div>
                     );

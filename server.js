@@ -50,6 +50,21 @@ function publicUser(account) {
   return rest;
 }
 
+// Read-time enrichment: attach the counterparty's display name/company so the
+// UI can show who you're dealing with (without duplicating it in storage).
+function withSeller(l) {
+  const a = data.accounts[l.sellerEmail];
+  return { ...l, sellerName: a?.name || "", sellerCompany: a?.company || "" };
+}
+function withBuyer(r) {
+  const a = data.accounts[r.buyerEmail];
+  return { ...r, buyerName: a?.name || "", buyerCompany: a?.company || "" };
+}
+function withHauler(b) {
+  const a = data.accounts[b.haulerEmail];
+  return { ...b, haulerName: a?.name || "", haulerCompany: a?.company || "" };
+}
+
 // Pulls the signed-in user's email from the Bearer token; null if not valid.
 function emailFromReq(req) {
   const auth = req.headers.authorization || '';
@@ -145,7 +160,7 @@ app.patch('/api/profile', requireAuth, (req, res) => {
 
 app.get('/api/listings', requireAuth, (req, res) => {
   // Everyone signed in can browse all listings.
-  res.json(data.listings);
+  res.json(data.listings.map(withSeller));
 });
 
 app.post('/api/listings', requireAuth, (req, res) => {
@@ -204,7 +219,7 @@ app.get('/api/requests', requireAuth, (req, res) => {
   const visible = data.requests.filter(
     (r) => r.buyerEmail === req.userEmail || myListingIds.has(String(r.listingId))
   );
-  res.json(visible);
+  res.json(visible.map(withBuyer));
 });
 
 app.post('/api/requests', requireAuth, (req, res) => {
@@ -327,7 +342,7 @@ app.get('/api/bids', requireAuth, (req, res) => {
   const visible = data.bids.filter(
     (b) => b.haulerEmail === req.userEmail || myOppIds.has(String(b.oppId))
   );
-  res.json(visible);
+  res.json(visible.map(withHauler));
 });
 
 app.post('/api/bids', requireAuth, (req, res) => {

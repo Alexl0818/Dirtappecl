@@ -71,6 +71,11 @@ function BuyerListingDetails() {
             {listing.material || "Not set"}
           </p>
 
+          <p className="buyer-details-label">Seller</p>
+          <p className="buyer-details-value">
+            {listing.sellerCompany || listing.sellerName || "—"}
+          </p>
+
           <div className="buyer-details-grid">
             <div>
               <p className="buyer-details-label">Quantity</p>
