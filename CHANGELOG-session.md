@@ -1,5 +1,20 @@
 # Session Changelog — Hardening & Geo Map
 
+## 💬 Order tracking, two-way messaging, deploy prep (latest)
+
+- **Buyer order tracking:** Request Details + the requests list now show the order
+  state — Awaiting seller → Arranging hauler → Hauler assigned (with hauler name,
+  price, availability). Server lets buyers see their request's opportunity + the
+  awarded hauler.
+- **Two-way messaging + Inbox:** new Messages inbox (Inbox tab) listing each
+  conversation; `MessageThread` is role-aware so buyer *and* seller can send and
+  reply; entry points on both sides. Verified live both directions.
+- **Durable store:** atomic writes + flush-on-shutdown in `db.js`.
+- **Deploy prep:** `DEPLOY.md`, one-command dev (Vite auto-starts the API), fresh
+  Replit zip. (Durability caveat for published Deployments documented.)
+
+
+
 ## 🤝 Marketplace workflow features (post-backend)
 
 Real two-sided workflow on top of the multi-user backend:
