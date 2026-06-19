@@ -1,111 +1,126 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import GlassCard from "./GlassCard";
+import BottomNav from "./BottomNav";
+import { useHaulBids } from "./HaulBidContext";
 
-function HaulerDashboard() {
-  const kpis = [
-    { label: "Active Jobs", value: 6, trend: "2 starting today" },
-    { label: "Available Trucks", value: 4, trend: "ready to dispatch" },
-    { label: "Miles Today", value: 320, trend: "live total" },
-  ];
+export default function HaulerDashboard() {
+  const navigate = useNavigate();
+  const haul = useHaulBids();
 
-  const jobs = [
-    {
-      id: "HAUL-331",
-      route: "Mooresville ➝ Statesville",
-      material: "Structural Fill",
-      loads: "14 loads",
-      status: "En Route",
-    },
-    {
-      id: "HAUL-327",
-      route: "Charlotte ➝ Concord",
-      material: "Unsuitable / Haul-Off",
-      loads: "9 loads",
-      status: "Scheduled",
-    },
-    {
-      id: "HAUL-319",
-      route: "Huntersville ➝ Cornelius",
-      material: "Topsoil",
-      loads: "6 loads",
-      status: "Completed",
-    },
-  ];
-
-  const notices = [
-    "Check DOT inspections for truck #204 before dispatch.",
-    "Weather delay expected after 3 PM in North Charlotte.",
-    "One open request is still unassigned to a truck.",
-  ];
+  const opps = Array.isArray(haul.opportunities) ? haul.opportunities : [];
 
   return (
-    <section className="seller-dashboard">
-      <div className="dashboard-header">
-        <div>
-          <h2 className="section-title">Hauler Dashboard</h2>
-          <p className="section-subtitle">
-            Keep trucks loaded, routes clear, and jobs on schedule.
-          </p>
+    <div className="app-root">
+      <main className="app-main">
+        <div className="dashboard-header">
+          <div>
+            <h2 className="section-title">Haul</h2>
+            <p className="section-subtitle">Open haul opportunities ready for bids.</p>
+          </div>
+
+          <button className="ghost-button" onClick={() => navigate("/mode")}>
+            Switch Mode
+          </button>
         </div>
-      </div>
 
-      <div className="dashboard-grid kpi-grid">
-        {kpis.map((item) => (
-          <GlassCard key={item.label} className="kpi-card">
-            <div className="kpi-label">{item.label}</div>
-            <div className="kpi-value">{item.value}</div>
-            <div className="kpi-trend">{item.trend}</div>
+        {opps.length === 0 ? (
+          <GlassCard className="dashboard-card">
+            <div className="card-title">No haul opportunities yet</div>
+            <div className="card-description">
+              When a seller accepts a request, it will create a haul opportunity here.
+            </div>
           </GlassCard>
-        ))}
-      </div>
+        ) : (
+          <div className="dashboard-grid">
+            {opps.map((o, idx) => {
+              const id = o?.id ?? `opp_${idx}`;
+              const mat = o?.material ?? "Unknown";
+              const qty = o?.quantity ?? "";
+              const unit = o?.unit ?? "";
+              const pickup = o?.pickupLocation ?? "TBD";
+              const dropoff = o?.dropoffAddress ?? "TBD";
+              const createdAt = o?.createdAt ? new Date(o.createdAt).toLocaleString() : "";
+              const status = o?.status ?? "open";
 
-      <div className="dashboard-grid main-grid">
-        <GlassCard>
-          <div className="card-header">
-            <h3>Today&apos;s Hauls</h3>
-            <button className="ghost-button">View all</button>
-          </div>
-          <div className="table-wrapper">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Route</th>
-                  <th>Material</th>
-                  <th>Loads</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {jobs.map((job) => (
-                  <tr key={job.id}>
-                    <td>{job.id}</td>
-                    <td>{job.route}</td>
-                    <td>{job.material}</td>
-                    <td>{job.loads}</td>
-                    <td>{job.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </GlassCard>
+              return (
+                <GlassCard key={id} className="dashboard-card">
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                    <div className="card-title">
+                      {mat} — {qty} {unit}
+                    </div>
+                    <span
+                      className={`status-pill ${
+                        status === "open" ? "status-active" : "status-draft"
+                      }`}
+                    >
+                      {status}
+                    </span>
+                  </div>
 
-        <GlassCard className="side-column">
-          <div className="card-header">
-            <h3>Hauler Notes</h3>
+                  <div className="card-description" style={{ marginTop: 8 }}>
+                    <div>
+                      <strong>Pickup:</strong> {pickup}
+                    </div>
+                    <div style={{ marginTop: 6 }}>
+                      <strong>Dropoff:</strong> {dropoff}
+                    </div>
+                    {createdAt ? (
+                      <div style={{ marginTop: 8, opacity: 0.75, fontSize: "0.78rem" }}>
+                        Created: {createdAt}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {o?.notes ? (
+                    <div style={{ marginTop: 8, opacity: 0.85, fontSize: "0.85rem" }}>
+                      {o.notes}
+                    </div>
+                  ) : null}
+
+                  <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <button className="primary-button" onClick={() => navigate(`/hauler/opportunity/${id}`)}>
+                      Open
+                    </button>
+
+                    <button
+                      className="ghost-button"
+                      onClick={() => navigate(`/hauler/opportunity/${id}`)}
+                    >
+                      Place Bid
+                    </button>
+                  </div>
+                </GlassCard>
+              );
+            })}
           </div>
-          <ul className="notification-list">
-            {notices.map((note, idx) => (
-              <li key={idx} className="notification-item">
-                {note}
-              </li>
-            ))}
-          </ul>
-        </GlassCard>
-      </div>
-    </section>
+        )}
+
+        {opps.length > 0 ? (
+          <div style={{ marginTop: 18 }}>
+            <button
+              className="ghost-button"
+              onClick={() => {
+                if (confirm("Clear all haul opportunities?")) haul.clearOpportunities();
+              }}
+            >
+              Clear Opportunities
+            </button>
+
+            <button
+              className="ghost-button"
+              style={{ marginLeft: 10 }}
+              onClick={() => {
+                if (confirm("Clear all haul bids?")) haul.clearBids();
+              }}
+            >
+              Clear Bids
+            </button>
+          </div>
+        ) : null}
+      </main>
+
+      <BottomNav />
+    </div>
   );
 }
-
-export default HaulerDashboard;

@@ -1,0 +1,306 @@
+/* Screen layout */
+.new-listing-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 12px 80px;
+  box-sizing: border-box;
+}
+
+.new-listing-inner {
+  width: 100%;
+  max-width: 480px;
+}
+
+/* Header */
+.new-listing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.new-listing-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #f9fafb;
+  margin: 0;
+}
+
+.new-listing-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: rgba(226, 232, 240, 0.7);
+}
+
+/* Form & cards */
+.new-listing-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+
+.new-listing-card {
+  padding: 12px 14px;
+}
+
+.new-listing-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: rgba(226, 232, 240, 0.9);
+  margin-bottom: 4px;
+}
+
+/* Inputs */
+.new-listing-input,
+.new-listing-select,
+.new-listing-textarea {
+  width: 100%;
+  padding: 9px 11px;
+  font-size: 0.86rem;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(15, 23, 42, 0.75);
+  color: #f9fafb;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.new-listing-input::placeholder,
+.new-listing-textarea::placeholder {
+  color: rgba(148, 163, 184, 0.8);
+}
+
+.new-listing-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: linear-gradient(
+      45deg,
+      transparent 50%,
+      rgba(148, 163, 184, 0.9) 50%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(148, 163, 184, 0.9) 50%,
+      transparent 50%
+    );
+  background-position: calc(100% - 16px) calc(50% - 3px),
+    calc(100% - 11px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+.new-listing-input:focus,
+.new-listing-select:focus,
+.new-listing-textarea:focus {
+  border-color: rgba(34, 197, 94, 0.85);
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.4);
+  background: rgba(15, 23, 42, 0.92);
+}
+
+/* Quantity / unit / price rows */
+.new-listing-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.new-listing-row-price {
+  margin-top: 6px;
+}
+
+.new-listing-field {
+  flex: 1;
+}
+
+.new-listing-input-with-prefix {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(15, 23, 42, 0.75);
+}
+
+.new-listing-prefix {
+  font-size: 0.85rem;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.new-listing-input-nobg {
+  border: none;
+  background: transparent;
+  padding-left: 2px;
+  padding-right: 0;
+  box-shadow: none;
+}
+
+.new-listing-input-nobg:focus {
+  border: none;
+  box-shadow: none;
+}
+
+/* Helper text */
+.new-listing-help {
+  margin: 4px 2px 0;
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+/* Toggle */
+.new-listing-toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  gap: 12px;
+}
+
+.new-listing-toggle {
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  background: rgba(15, 23, 42, 0.9);
+  cursor: pointer;
+  position: relative;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.new-listing-toggle-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(226, 232, 240, 0.96);
+  box-shadow: 0 3px 6px rgba(15, 23, 42, 0.7);
+  transform: translateX(0);
+  transition: transform 0.18s ease;
+}
+
+/* On state */
+.new-listing-toggle-on {
+  background: linear-gradient(
+    135deg,
+    rgba(34, 197, 94, 0.95),
+    rgba(16, 185, 129, 0.95)
+  );
+  border-color: rgba(34, 197, 94, 0.9);
+}
+
+.new-listing-toggle-on .new-listing-toggle-thumb {
+  transform: translateX(18px);
+}
+
+/* Notes */
+.new-listing-field-notes {
+  margin-bottom: 10px;
+}
+
+.new-listing-textarea {
+  resize: vertical;
+  min-height: 86px;
+}
+
+/* Photo placeholder */
+.new-listing-photo-row {
+  margin-top: 4px;
+}
+
+.new-listing-photo-placeholder {
+  border-radius: 16px;
+  border: 1px dashed rgba(148, 163, 184, 0.7);
+  background: radial-gradient(
+      circle at top left,
+      rgba(34, 197, 94, 0.06),
+      transparent 55%
+    ),
+    rgba(15, 23, 42, 0.85);
+  padding: 10px 12px;
+}
+
+.new-listing-photo-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.new-listing-photo-icon {
+  font-size: 1.2rem;
+}
+
+.new-listing-photo-text {
+  font-size: 0.8rem;
+  color: rgba(226, 232, 240, 0.85);
+}
+
+/* Actions */
+.new-listing-actions {
+  margin-top: 4px;
+}
+
+.new-listing-save-btn {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 13px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  background: linear-gradient(
+    135deg,
+    #22c55e,
+    #16a34a
+  );
+  color: #0b1120;
+  box-shadow: 0 10px 30px rgba(34, 197, 94, 0.35);
+  transition: transform 0.12s ease, box-shadow 0.12s ease,
+    filter 0.12s ease;
+}
+
+.new-listing-save-btn:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 0 6px 18px rgba(34, 197, 94, 0.3);
+  filter: brightness(0.97);
+}
+
+/* Mobile-first: keep everything tight for ~430px */
+@media (max-width: 420px) {
+  .new-listing-card {
+    padding: 10px 11px;
+  }
+
+  .new-listing-header {
+    margin-bottom: 10px;
+  }
+}
+.new-listing-cancel-btn {
+  border: none;
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: rgba(226, 232, 240, 0.85);
+  padding: 6px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.new-listing-cancel-btn:hover {
+  background: rgba(15, 23, 42, 0.65);
+}

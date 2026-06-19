@@ -2,78 +2,82 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import GlassCard from "./GlassCard";
 import BottomNav from "./BottomNav";
+
+import { useInquiry } from "./InquiryContext";
 import { useSellerListings } from "./SellerListingContext";
 
-export default function NewListing() {
+export default function BuyerRequest() {
   const navigate = useNavigate();
   const { listingId } = useParams();
+
+  const inquiry = useInquiry();
   const seller = useSellerListings();
 
   const listings = Array.isArray(seller.listings) ? seller.listings : [];
-  const existing = useMemo(() => {
+  const matchedListing = useMemo(() => {
     if (!listingId) return null;
     return listings.find((l) => String(l?.id) === String(listingId)) || null;
   }, [listingId, listings]);
-  const isEdit = !!listingId;
+
+  const materialOptions = useMemo(
+    () => ["Clean Fill", "Topsoil", "Clay", "Gravel", "Asphalt Millings", "Other"],
+    []
+  );
 
   const [form, setForm] = useState({
     material: "Clean Fill",
     quantity: "",
     unit: "tons",
-    location: "",
-    price: "",
+    address: "",
     notes: "",
   });
 
   const [error, setError] = useState("");
 
-  // Prefill the form when editing an existing listing
+  // Prefill when coming from a listing
   useEffect(() => {
-    if (!existing) return;
-    setForm({
-      material: existing.material || "Clean Fill",
+    if (!matchedListing) return;
+
+    setForm((prev) => ({
+      ...prev,
+      material: matchedListing.material || prev.material,
       quantity:
-        existing.quantity != null ? String(existing.quantity) : "",
-      unit: existing.unit || "tons",
-      location: existing.location || "",
-      price: existing.price != null ? String(existing.price) : "",
-      notes: existing.notes || "",
-    });
-  }, [existing]);
+        typeof matchedListing.quantity === "number" || typeof matchedListing.quantity === "string"
+          ? String(matchedListing.quantity)
+          : prev.quantity,
+      unit: matchedListing.unit || prev.unit,
+      notes: matchedListing.notes ? String(matchedListing.notes) : prev.notes,
+    }));
+  }, [matchedListing]);
 
   function setField(key, value) {
     setForm((p) => ({ ...p, [key]: value }));
   }
 
-  function onPublish() {
+  function onContinue() {
     setError("");
 
     if (!form.material) return setError("Please select a material.");
     if (!form.quantity || Number.isNaN(Number(form.quantity)))
       return setError("Please enter a valid quantity.");
-    if (!form.location.trim()) return setError("Please enter a location.");
+    if (!form.address.trim()) return setError("Please enter a delivery address.");
 
-    const fields = {
+    const request = {
+      id: `req_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      status: "open",
       material: form.material,
       quantity: Number(form.quantity),
       unit: form.unit,
-      location: form.location.trim(),
-      price: form.price.trim(),
+      address: form.address.trim(),
       notes: form.notes.trim(),
+
+      // ✅ link to seller listing when applicable
+      listingId: listingId || null,
     };
 
-    if (isEdit) {
-      seller.updateListing(listingId, fields);
-    } else {
-      seller.addListing({
-        id: `lst_${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        status: "active",
-        ...fields,
-      });
-    }
-
-    navigate("/seller/listing");
+    inquiry.addRequest(request);
+    navigate("/buyer/requests");
   }
 
   return (
@@ -81,15 +85,17 @@ export default function NewListing() {
       <main className="app-main">
         <div className="dashboard-header">
           <div>
-            <h2 className="section-title">{isEdit ? "Edit Listing" : "New Listing"}</h2>
+            <h2 className="section-title">
+              {matchedListing ? "Request This Listing" : "Buyer Request"}
+            </h2>
             <p className="section-subtitle">
-              {isEdit
-                ? "Update the details buyers see."
-                : "Post available material for buyers."}
+              {matchedListing
+                ? `Prefilled from: ${matchedListing.material || "Listing"}`
+                : "Create a request for material."}
             </p>
           </div>
 
-          <button className="ghost-button" onClick={() => navigate("/seller/dashboard")}>
+          <button className="ghost-button" onClick={() => navigate("/buyer/home")}>
             Back
           </button>
         </div>
@@ -109,6 +115,16 @@ export default function NewListing() {
               </div>
             ) : null}
 
+            {matchedListing ? (
+              <div style={{ marginBottom: 4, opacity: 0.9, fontSize: "0.85rem" }}>
+                <span style={{ opacity: 0.8 }}>From listing:</span>{" "}
+                <strong>
+                  {matchedListing.material} — {matchedListing.quantity} {matchedListing.unit}
+                </strong>{" "}
+                {matchedListing.location ? <span>({matchedListing.location})</span> : null}
+              </div>
+            ) : null}
+
             <div className="form-field">
               <div className="field-label">Material</div>
               <select
@@ -116,12 +132,11 @@ export default function NewListing() {
                 value={form.material}
                 onChange={(e) => setField("material", e.target.value)}
               >
-                <option>Clean Fill</option>
-                <option>Topsoil</option>
-                <option>Clay</option>
-                <option>Gravel</option>
-                <option>Asphalt Millings</option>
-                <option>Other</option>
+                {materialOptions.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -149,22 +164,12 @@ export default function NewListing() {
             </div>
 
             <div className="form-field">
-              <div className="field-label">Location</div>
+              <div className="field-label">Delivery Address</div>
               <input
                 className="field-input"
-                value={form.location}
-                onChange={(e) => setField("location", e.target.value)}
-                placeholder="City / Jobsite / Zip"
-              />
-            </div>
-
-            <div className="form-field">
-              <div className="field-label">Price (optional)</div>
-              <input
-                className="field-input"
-                value={form.price}
-                onChange={(e) => setField("price", e.target.value)}
-                placeholder="$ / ton or $ / load"
+                value={form.address}
+                onChange={(e) => setField("address", e.target.value)}
+                placeholder="Jobsite address"
               />
             </div>
 
@@ -174,14 +179,14 @@ export default function NewListing() {
                 className="field-input"
                 value={form.notes}
                 onChange={(e) => setField("notes", e.target.value)}
-                placeholder="Access details, hours, restrictions, etc."
+                placeholder="Optional details (access, hours, material specs, etc.)"
                 rows={4}
               />
             </div>
 
             <div className="profile-actions">
-              <button className="primary-button full-width" onClick={onPublish}>
-                {isEdit ? "Save Changes" : "Publish Listing"}
+              <button className="primary-button full-width" onClick={onContinue}>
+                Continue
               </button>
             </div>
           </div>

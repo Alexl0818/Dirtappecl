@@ -1,51 +1,161 @@
-import NewListing from "./components/NewListing";
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 
-import React, { useState } from "react";
+import { InquiryProvider } from "./components/InquiryContext";
+import { SellerListingProvider } from "./components/SellerListingContext";
+import { HaulBidProvider } from "./components/HaulBidContext";
+import { MessageProvider } from "./components/MessageContext";
+
+import WelcomeScreen from "./components/WelcomeScreen";
+import LoginScreen from "./components/LoginScreen";
+import SignupScreen from "./components/SignupScreen";
+import ModeSelectScreen from "./components/ModeSelectScreen";
+
 import BuyerHome from "./components/BuyerHome";
+import BuyerRequest from "./components/BuyerRequest";
+import BuyerRequests from "./components/BuyerRequests";
+import BuyerRequestDetails from "./components/BuyerRequestDetails";
+import BuyerBrowseListings from "./components/BuyerBrowseListings";
+import BuyerListingDetails from "./components/BuyerListingDetails";
+import BuyerMapView from "./components/BuyerMapView";
+
 import SellerDashboard from "./components/SellerDashboard";
+import NewListing from "./components/NewListing";
+import ListingDetails from "./components/ListingDetails";
+import SellerInquiryDetails from "./components/SellerInquiryDetails";
+
 import HaulerDashboard from "./components/HaulerDashboard";
+import HaulerHaulOpportunity from "./components/HaulerHaulOpportunity";
+
 import ProfileScreen from "./components/ProfileScreen";
-import AIAssistant from "./components/AIAssistant";
-import BottomNav from "./components/BottomNav";
+import MessageThread from "./components/MessageThread";
 
-function App() {
-  const [activeTab, setActiveTab] = useState("sell");
+import ErrorBoundary from "./components/ErrorBoundary";
 
-  const renderScreen = () => {
-    switch (activeTab) {
-        case "newListing":
-        return <NewListing onCancel={() => setActiveTab("sell")}
-                           onCreate={(listing) => {
-                             console.log("New listing:", listing);
-                             setActiveTab("sell");
-                           }} />;
+import "./App.css";
 
-      case "buy":
-        return <BuyerHome />;
-      case "sell":
-        return <SellerDashboard />;
-      case "haul":
-        return <HaulerDashboard />;
-      case "ai":
-        return <AIAssistant />;
-      case "profile":
-        return <ProfileScreen />;
-      default:
-        return <SellerDashboard />;
-    }
-  };
-
+function AppInner() {
   return (
-    <div className="app-root">
-      <main className="app-main">{renderScreen()}</main>
+    <Routes>
+      <Route path="/" element={<WelcomeScreen />} />
+      <Route path="/login" element={<LoginScreen />} />
+      <Route path="/mode" element={<ModeSelectScreen />} />
 
-      {/* IMPORTANT: pass the props BottomNav expects */}
-      <BottomNav
-        activeTab={activeTab}
-        onChangeTab={setActiveTab}
+      <Route path="/signup" element={<SignupScreen />} />
+
+      {/* Buyer */}
+      <Route path="/buyer/home" element={<BuyerHome />} />
+      <Route path="/buyer/request" element={<BuyerRequest />} />
+      <Route path="/buyer/request/:listingId" element={<BuyerRequest />} />
+      <Route path="/buyer/requests" element={<BuyerRequests />} />
+      <Route
+        path="/buyer/browse"
+        element={
+          <ErrorBoundary>
+            <BuyerBrowseListings />
+          </ErrorBoundary>
+        }
       />
-    </div>
+      <Route path="/buyer/request-details" element={<BuyerRequestDetails />} />
+      <Route
+        path="/buyer/details/:listingId"
+        element={
+          <ErrorBoundary>
+            <BuyerListingDetails />
+          </ErrorBoundary>
+        }
+      />
+      <Route
+        path="/buyer/map"
+        element={
+          <ErrorBoundary>
+            <BuyerMapView />
+          </ErrorBoundary>
+        }
+      />
+
+      {/* Seller */}
+      <Route
+        path="/seller/dashboard"
+        element={
+          <ErrorBoundary>
+            <SellerDashboard />
+          </ErrorBoundary>
+        }
+      />
+      <Route
+        path="/seller/new"
+        element={
+          <ErrorBoundary>
+            <NewListing />
+          </ErrorBoundary>
+        }
+      />
+      <Route
+        path="/seller/edit/:listingId"
+        element={
+          <ErrorBoundary>
+            <NewListing />
+          </ErrorBoundary>
+        }
+      />
+      <Route
+        path="/seller/listing"
+        element={
+          <ErrorBoundary>
+            <ListingDetails />
+          </ErrorBoundary>
+        }
+      />
+      <Route
+        path="/seller/inquiry/:listingId"
+        element={
+          <ErrorBoundary>
+            <SellerInquiryDetails />
+          </ErrorBoundary>
+        }
+      />
+
+      {/* Hauler */}
+      <Route
+        path="/hauler/dashboard"
+        element={
+          <ErrorBoundary>
+            <HaulerDashboard />
+          </ErrorBoundary>
+        }
+      />
+      <Route
+        path="/hauler/opportunity/:oppId"
+        element={
+          <ErrorBoundary>
+            <HaulerHaulOpportunity />
+          </ErrorBoundary>
+        }
+      />
+
+      {/* Profile + Messages */}
+      <Route path="/profile" element={<ProfileScreen />} />
+      <Route path="/messages/thread" element={<MessageThread />} />
+
+      {/* Catch-all: send unknown URLs back to the welcome screen */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <InquiryProvider>
+      <SellerListingProvider>
+        <HaulBidProvider>
+          <MessageProvider>
+            <ErrorBoundary>
+              <AppInner />
+            </ErrorBoundary>
+          </MessageProvider>
+        </HaulBidProvider>
+      </SellerListingProvider>
+    </InquiryProvider>
+  );
+}

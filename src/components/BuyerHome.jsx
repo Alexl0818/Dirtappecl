@@ -1,109 +1,50 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import GlassCard from "./GlassCard";
+import BottomNav from "./BottomNav";
+import "./BuyerHome.css";
 
-function BuyerHome() {
-  const kpis = [
-    { label: "Matches Near You", value: 18, trend: "within 25 miles" },
-    { label: "Open Requests", value: 4, trend: "waiting on quotes" },
-    { label: "Saved Listings", value: 9, trend: "updated daily" },
-  ];
-
-  const listings = [
-    {
-      id: "BUY-211",
-      title: "3,000 CY – Topsoil (Unscreened)",
-      location: "Huntersville, NC",
-      price: "$11 / CY",
-    },
-    {
-      id: "BUY-204",
-      title: "5,500 CY – Structural Fill",
-      location: "Concord, NC",
-      price: "$8 / CY",
-    },
-    {
-      id: "BUY-189",
-      title: "2,000 CY – Screened Topsoil",
-      location: "Mooresville, NC",
-      price: "$15 / CY",
-    },
-  ];
-
-  const quickFilters = [
-    "Topsoil",
-    "Structural Fill",
-    "Screened",
-    "Haul Included",
-    "Within 25 mi",
-  ];
+export default function BuyerHome() {
+  const navigate = useNavigate();
 
   return (
-    <section className="seller-dashboard">
-      <div className="dashboard-header">
-        <div>
-          <h2 className="section-title">Find Dirt</h2>
-          <p className="section-subtitle">
-            Browse nearby material listings and send inquiries in a few taps.
-          </p>
+    <div className="app-root">
+      <main className="app-main">
+        <div className="dashboard-header">
+          <div>
+            <h2 className="section-title">Buyer</h2>
+            <p className="section-subtitle">Create requests or browse listings.</p>
+          </div>
+
+          <button className="primary-button" onClick={() => navigate("/buyer/request")}>
+            New Request
+          </button>
         </div>
-      </div>
 
-      <div className="dashboard-grid kpi-grid">
-        {kpis.map((item) => (
-          <GlassCard key={item.label} className="kpi-card">
-            <div className="kpi-label">{item.label}</div>
-            <div className="kpi-value">{item.value}</div>
-            <div className="kpi-trend">{item.trend}</div>
+        <div className="dashboard-grid">
+          <GlassCard className="dashboard-card" onClick={() => navigate("/buyer/request")}>
+            <div className="card-title">Create Request</div>
+            <div className="card-description">Post what material you need.</div>
           </GlassCard>
-        ))}
-      </div>
 
-      <div className="dashboard-grid main-grid">
-        <GlassCard>
-          <div className="card-header">
-            <h3>Featured Listings Near You</h3>
-            <button className="ghost-button">View all</button>
-          </div>
-          <div className="table-wrapper">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Material</th>
-                  <th>Location</th>
-                  <th>Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                {listings.map((lot) => (
-                  <tr key={lot.id}>
-                    <td>{lot.id}</td>
-                    <td>{lot.title}</td>
-                    <td>{lot.location}</td>
-                    <td>{lot.price}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </GlassCard>
+          <GlassCard className="dashboard-card" onClick={() => navigate("/buyer/requests")}>
+            <div className="card-title">Your Requests</div>
+            <div className="card-description">View requests you’ve submitted.</div>
+          </GlassCard>
 
-        <GlassCard className="side-column">
-          <div className="card-header">
-            <h3>Quick Filters</h3>
-          </div>
-          <ul className="notification-list">
-            {quickFilters.map((f) => (
-              <li key={f} className="notification-item">
-                {f}
-              </li>
-            ))}
-          </ul>
-        </GlassCard>
-      </div>
-    </section>
+          <GlassCard className="dashboard-card" onClick={() => navigate("/buyer/browse")}>
+            <div className="card-title">Browse Listings</div>
+            <div className="card-description">See material posted by sellers.</div>
+          </GlassCard>
+
+          <GlassCard className="dashboard-card" onClick={() => navigate("/buyer/map")}>
+            <div className="card-title">Map View</div>
+            <div className="card-description">Map placeholder for later.</div>
+          </GlassCard>
+        </div>
+      </main>
+
+      <BottomNav />
+    </div>
   );
 }
-
-export default BuyerHome;
-

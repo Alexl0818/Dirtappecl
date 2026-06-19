@@ -1,0 +1,197 @@
+.buyer-details-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 12px 80px;
+  box-sizing: border-box;
+}
+
+.buyer-details-inner {
+  width: 100%;
+  max-width: 480px;
+}
+
+/* Header */
+.buyer-details-header {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.buyer-details-back-link {
+  border: none;
+  background: transparent;
+  font-size: 0.78rem;
+  color: rgba(226, 232, 240, 0.85);
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.buyer-details-title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #f9fafb;
+  margin: 0;
+}
+
+.buyer-details-subtitle {
+  font-size: 0.8rem;
+  color: rgba(226, 232, 240, 0.75);
+  margin: 3px 0 0;
+}
+
+/* Cards */
+.buyer-details-card {
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+
+.buyer-details-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(148, 163, 184, 0.95);
+  margin-bottom: 2px;
+}
+
+.buyer-details-value {
+  font-size: 0.9rem;
+  color: #f9fafb;
+  margin: 0 0 6px;
+}
+
+.buyer-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin-top: 6px;
+}
+
+.buyer-details-notes-block {
+  margin-top: 8px;
+}
+
+.buyer-details-notes {
+  font-size: 0.82rem;
+  color: rgba(226, 232, 240, 0.9);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.buyer-details-meta {
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.9);
+  margin-top: 4px;
+}
+
+/* Actions */
+.buyer-details-actions-card {
+  margin-top: 4px;
+}
+
+.buyer-details-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.buyer-details-primary-btn,
+.buyer-details-secondary-btn {
+  width: 100%;
+  border-radius: 999px;
+  padding: 11px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+}
+
+.buyer-details-primary-btn {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #0b1120;
+  box-shadow: 0 10px 28px rgba(34, 197, 94, 0.35);
+}
+
+.buyer-details-secondary-btn {
+  background: rgba(15, 23, 42, 0.96);
+  color: rgba(226, 232, 240, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.8);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.9);
+}
+
+.buyer-details-primary-btn:active,
+.buyer-details-secondary-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.9);
+  filter: brightness(0.97);
+}
+
+.buyer-details-footnote {
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.95);
+  margin-top: 8px;
+}
+
+/* Error / simple back */
+.buyer-details-error {
+  font-size: 0.9rem;
+  color: #fee2e2;
+  margin-bottom: 10px;
+}
+
+.buyer-details-back-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.8);
+  background: rgba(15, 23, 42, 0.95);
+  color: rgba(226, 232, 240, 0.96);
+  font-size: 0.8rem;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+/* Clickable rows hint */
+.buyer-listing-row-clickable {
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+.buyer-listing-row-clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.95);
+  border-color: rgba(148, 163, 184, 0.9);
+}
+
+/* Mobile */
+@media (max-width: 420px) {
+  .buyer-details-card {
+    padding: 10px 11px;
+  }
+}
+.buyer-details-input,
+.buyer-details-textarea {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  background: rgba(15, 23, 42, 0.9);
+  color: #f9fafb;
+  font-size: 0.8rem;
+  padding: 7px 9px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.buyer-details-input::placeholder,
+.buyer-details-textarea::placeholder {
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.buyer-details-input:focus,
+.buyer-details-textarea:focus {
+  border-color: rgba(34, 197, 94, 0.9);
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.4);
+}

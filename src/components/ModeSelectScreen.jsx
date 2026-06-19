@@ -1,40 +1,27 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
-const ModeSelectScreen = ({
-  onSelectBuyer,
-  onSelectSeller,
-  onSelectHauler,
-}) => {
+export default function ModeSelectScreen() {
+  const navigate = useNavigate();
+
   return (
-    <div>
-      <h2>What do you want to do today?</h2>
-      <p style={{ marginBottom: "16px" }}>
-        You can buy, sell, or haul soil. You’re not locked into just one.
-      </p>
-      <button style={buttonStyle} onClick={onSelectBuyer}>
-        Buy Soil
-      </button>
-      <button style={buttonStyle} onClick={onSelectSeller}>
-        Sell Soil
-      </button>
-      <button style={buttonStyle} onClick={onSelectHauler}>
-        Haul Soil (Hauler / Vendor)
-      </button>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#222",
+        color: "white",
+        padding: "20px",
+      }}
+    >
+      <h1>Mode Select</h1>
+      <p>Select a role to continue.</p>
+
+      <div style={{ display: "grid", gap: 12, maxWidth: 420 }}>
+        <button onClick={() => navigate("/buyer/home")}>Buyer</button>
+        <button onClick={() => navigate("/seller/dashboard")}>Seller</button>
+        <button onClick={() => navigate("/hauler/dashboard")}>Hauler</button>
+        <button onClick={() => navigate("/")}>Back</button>
+      </div>
     </div>
   );
-};
-
-const buttonStyle = {
-  display: "block",
-  width: "100%",
-  padding: "12px 16px",
-  marginBottom: "12px",
-  fontSize: "16px",
-  borderRadius: "8px",
-  border: "none",
-  cursor: "pointer",
-  backgroundColor: "#2563eb",
-  color: "white",
-};
-
-export default ModeSelectScreen;
+}

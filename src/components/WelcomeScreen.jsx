@@ -1,19 +1,34 @@
-import React from "react";
+// src/components/WelcomeScreen.jsx
 
-const WelcomeScreen = ({ onLogin, onSignup }) => (
-  <div>
-    <h1 style={{ textAlign: "center" }}>SoilConnect</h1>
-    <p style={{ textAlign: "center", marginBottom: "32px" }}>
-      Connecting soil buyers, sellers, and haulers.
-    </p>
-    <button style={buttonStyle} onClick={onLogin}>
-      Log In
-    </button>
-    <button style={buttonStyle} onClick={onSignup}>
-      Sign Up
-    </button>
-  </div>
-);
+import React from "react";
+import { useNavigate } from "react-router-dom";
+
+const WelcomeScreen = () => {
+  const navigate = useNavigate();
+
+  const handleLogin = () => {
+    navigate("/login");
+  };
+
+  const handleSignup = () => {
+    navigate("/signup");
+  };
+
+  return (
+    <div>
+      <h1 style={{ textAlign: "center" }}>SoilConnect</h1>
+      <p style={{ textAlign: "center", marginBottom: "32px" }}>
+        Connecting soil buyers, sellers, and haulers.
+      </p>
+      <button style={buttonStyle} onClick={handleLogin}>
+        Log In
+      </button>
+      <button style={buttonStyle} onClick={handleSignup}>
+        Sign Up
+      </button>
+    </div>
+  );
+};
 
 const buttonStyle = {
   display: "block",
