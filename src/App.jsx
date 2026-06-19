@@ -1,6 +1,7 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
+import { AuthProvider } from "./components/AuthContext";
 import { InquiryProvider } from "./components/InquiryContext";
 import { SellerListingProvider } from "./components/SellerListingContext";
 import { HaulBidProvider } from "./components/HaulBidContext";
@@ -146,16 +147,18 @@ function AppInner() {
 
 export default function App() {
   return (
-    <InquiryProvider>
-      <SellerListingProvider>
-        <HaulBidProvider>
-          <MessageProvider>
-            <ErrorBoundary>
-              <AppInner />
-            </ErrorBoundary>
-          </MessageProvider>
-        </HaulBidProvider>
-      </SellerListingProvider>
-    </InquiryProvider>
+    <AuthProvider>
+      <InquiryProvider>
+        <SellerListingProvider>
+          <HaulBidProvider>
+            <MessageProvider>
+              <ErrorBoundary>
+                <AppInner />
+              </ErrorBoundary>
+            </MessageProvider>
+          </HaulBidProvider>
+        </SellerListingProvider>
+      </InquiryProvider>
+    </AuthProvider>
   );
 }
