@@ -5,6 +5,7 @@ import BottomNav from "./BottomNav";
 
 import { useInquiry } from "./InquiryContext";
 import { useSellerListings } from "./SellerListingContext";
+import { geocodeAddress } from "../lib/maps";
 
 export default function BuyerRequest() {
   const navigate = useNavigate();
@@ -54,7 +55,9 @@ export default function BuyerRequest() {
     setForm((p) => ({ ...p, [key]: value }));
   }
 
-  function onContinue() {
+  const [saving, setSaving] = useState(false);
+
+  async function onContinue() {
     setError("");
 
     if (!form.material) return setError("Please select a material.");
@@ -75,6 +78,16 @@ export default function BuyerRequest() {
       // ✅ link to seller listing when applicable
       listingId: listingId || null,
     };
+
+    // Best-effort geocode so the request location can show on the map.
+    setSaving(true);
+    const geo = await geocodeAddress(request.address);
+    setSaving(false);
+    if (geo) {
+      request.lat = geo.lat;
+      request.lng = geo.lng;
+      request.geoFormatted = geo.formatted;
+    }
 
     inquiry.addRequest(request);
     navigate("/buyer/requests");
@@ -185,8 +198,12 @@ export default function BuyerRequest() {
             </div>
 
             <div className="profile-actions">
-              <button className="primary-button full-width" onClick={onContinue}>
-                Continue
+              <button
+                className="primary-button full-width"
+                onClick={onContinue}
+                disabled={saving}
+              >
+                {saving ? "Saving…" : "Continue"}
               </button>
             </div>
           </div>

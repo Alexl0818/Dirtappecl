@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import GlassCard from "./GlassCard";
 import BottomNav from "./BottomNav";
 import { useSellerListings } from "./SellerListingContext";
+import { geocodeAddress } from "../lib/maps";
 
 export default function NewListing() {
   const navigate = useNavigate();
@@ -45,7 +46,9 @@ export default function NewListing() {
     setForm((p) => ({ ...p, [key]: value }));
   }
 
-  function onPublish() {
+  const [saving, setSaving] = useState(false);
+
+  async function onPublish() {
     setError("");
 
     if (!form.material) return setError("Please select a material.");
@@ -61,6 +64,16 @@ export default function NewListing() {
       price: form.price.trim(),
       notes: form.notes.trim(),
     };
+
+    // Best-effort geocode so the listing shows on the map. No-ops without a key.
+    setSaving(true);
+    const geo = await geocodeAddress(fields.location);
+    setSaving(false);
+    if (geo) {
+      fields.lat = geo.lat;
+      fields.lng = geo.lng;
+      fields.geoFormatted = geo.formatted;
+    }
 
     if (isEdit) {
       seller.updateListing(listingId, fields);
@@ -180,8 +193,16 @@ export default function NewListing() {
             </div>
 
             <div className="profile-actions">
-              <button className="primary-button full-width" onClick={onPublish}>
-                {isEdit ? "Save Changes" : "Publish Listing"}
+              <button
+                className="primary-button full-width"
+                onClick={onPublish}
+                disabled={saving}
+              >
+                {saving
+                  ? "Saving…"
+                  : isEdit
+                  ? "Save Changes"
+                  : "Publish Listing"}
               </button>
             </div>
           </div>

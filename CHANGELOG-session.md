@@ -16,11 +16,26 @@ Node 20 installed at `~/.local/node-v20.18.1-darwin-x64/bin` (no system Node).
 - **Catch-all route added.** Unknown URLs previously rendered blank; now redirect to `/`.
 - **Fixed unstable React keys.** `BuyerBrowseListings`, `ListingDetails`, `HaulerDashboard` used `Math.random()` in `key` (remount every render) — now stable index fallbacks.
 
+- **Simulated auth (Task #2) — DONE & verified.** `AuthContext` (localStorage):
+  signup/login/logout/updateProfile, email + password validation, duplicate-email
+  guard; the session user never stores the password. `LoginScreen`/`SignupScreen`
+  rebuilt with controlled inputs + inline errors + Enter-to-submit. `ProfileScreen`
+  prefills from the account, saves name/company/phone/region/roles, logout, and a
+  signed-out fallback. Verified live: signup, validation, wrong/right login, logout,
+  profile save persisting across sessions.
+- **Real geo map (Task #3) — BUILT (tiles pending your key).** `@vis.gl/react-google-maps`
+  installed. `src/lib/maps.js` (key read from `VITE_GOOGLE_MAPS_API_KEY`, `geocodeAddress`,
+  `hasCoords`). `<APIProvider>` mounts app-wide only when a key exists. Listings and
+  requests now best-effort geocode on save (lat/lng stored; no-ops without a key).
+  `BuyerMapView` rebuilt as a real Google Map with listing markers + info windows +
+  "View details", and a clean setup fallback (with a textual listing list) when no key.
+  `.env.example` documents setup. Verified live WITHOUT a key: fallback renders, publish
+  still saves, console clean. The actual map-tile rendering needs your key to confirm.
+
 ## 🔁 In progress / next (autonomous run continues)
 
-- **Bug sweep (Task #1):** a read-only audit subagent is combing all of `src/` for more correctness issues; findings will be folded in.
-- **Simulated auth (Task #2):** AuthContext + validated Login/Signup + persistent local account + Profile wiring.
-- **Real geo map (Task #3):** lat/lng on listings/requests/opportunities, address geocoding, Google Maps view replacing the placeholder. Built env-keyed with a graceful fallback.
+- **Bug sweep (Task #1):** a read-only audit subagent combed `src/`; folding in
+  remaining findings, then a full final verification pass of every flow.
 
 ## ⚠️ Needs Alex (not blocking the build)
 
