@@ -35,6 +35,11 @@ DELETE endpoints for the "clear" actions. Consumers updated to async
 - Follow-ups: real password hashing (prototype stores plaintext server-side) and
   tightening a couple of per-resource write checks.
 
+**Dev runs as one command:** Vite now auto-starts the API server via a dev-only
+plugin (`vite.config.js`), so `npm run dev` (or just `vite`) boots both UI and
+backend — no separate step. Server exits quietly if its port is already taken
+(safe double-start). Same behavior locally and on Replit.
+
 
 
 App: **SoilConnect** (Site-Sync) — soil marketplace (buyer ↔ seller ↔ hauler).

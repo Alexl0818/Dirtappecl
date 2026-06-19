@@ -404,6 +404,17 @@ app.get('/api/health', (req, res) => {
 });
 
 const PORT = 3001;
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`API server running on port ${PORT}`);
+});
+
+// If something is already serving on this port (e.g. a second launcher), exit
+// quietly instead of crashing — the existing instance keeps serving.
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`Port ${PORT} already in use — assuming the API server is already running.`);
+    process.exit(0);
+  }
+  console.error('API server error:', err);
+  process.exit(1);
 });
