@@ -1,6 +1,15 @@
 # Session Changelog — Hardening & Geo Map
 
-## 💬 Order tracking, two-way messaging, deploy prep (latest)
+## 🔔 Notifications + full lifecycle (latest)
+
+- **Nav notification badges:** Sell shows open buyer requests on your listings;
+  Haul shows open opportunities you haven't bid on.
+- **Delivered/completed lifecycle:** the winning hauler can "Mark delivered";
+  the haul closes (open → awarded → completed) and everyone sees "Delivered"
+  (buyer order tracking, requests list, hauler Your Bids). Lifecycle is now
+  end-to-end: post → request → accept/decline → bid → award → delivered.
+
+## 💬 Order tracking, two-way messaging, deploy prep
 
 - **Buyer order tracking:** Request Details + the requests list now show the order
   state — Awaiting seller → Arranging hauler → Hauler assigned (with hauler name,
