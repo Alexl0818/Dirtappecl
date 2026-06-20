@@ -106,14 +106,6 @@ function BuyerListingDetails() {
                 {listing.location || "Not set"}
               </p>
             </div>
-            <div>
-              <p className="buyer-details-label">Haul Included</p>
-              <p className="buyer-details-value">
-                {listing.haulIncluded
-                  ? "Yes – haul included"
-                  : "No – material only"}
-              </p>
-            </div>
           </div>
 
           <div className="buyer-details-notes-block">

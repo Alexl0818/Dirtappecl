@@ -27,11 +27,15 @@ export default function MessageThread() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inquiry?.id]);
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
-    if (!draft.trim()) return;
-    sendMessage(inquiryId, { from: myRole, text: draft.trim() });
-    setDraft("");
+    if (!draft.trim() || !inquiry?.id) return;
+    try {
+      await sendMessage(inquiry.id, { from: myRole, text: draft.trim() });
+      setDraft("");
+    } catch (err) {
+      console.error("send message failed", err.message);
+    }
   };
 
   if (!inquiry) {

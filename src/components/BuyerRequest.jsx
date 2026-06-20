@@ -65,17 +65,13 @@ export default function BuyerRequest() {
       return setError("Please enter a valid quantity.");
     if (!form.address.trim()) return setError("Please enter a delivery address.");
 
+    // The server assigns id/createdAt/status/buyerEmail.
     const request = {
-      id: `req_${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      status: "open",
       material: form.material,
       quantity: Number(form.quantity),
       unit: form.unit,
       address: form.address.trim(),
       notes: form.notes.trim(),
-
-      // ✅ link to seller listing when applicable
       listingId: listingId || null,
     };
 

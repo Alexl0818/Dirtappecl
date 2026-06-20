@@ -23,6 +23,14 @@ app.use((req, res, next) => {
 const newId = (prefix) => `${prefix}_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
 const isEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || '').trim());
 
+// Keep only whitelisted keys from a body — prevents clients from overwriting
+// server-controlled fields (id, owner, createdAt, status, …) via PATCH.
+const pick = (obj, keys) => {
+  const out = {};
+  for (const k of keys) if (obj && k in obj) out[k] = obj[k];
+  return out;
+};
+
 // Password hashing (scrypt, built into Node — no dependencies).
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');
@@ -219,7 +227,21 @@ app.patch('/api/listings/:id', requireAuth, (req, res) => {
   if (l.sellerEmail && l.sellerEmail !== req.userEmail) {
     return res.status(403).json({ error: 'Not your listing.' });
   }
-  Object.assign(l, req.body || {});
+  Object.assign(
+    l,
+    pick(req.body, [
+      "material",
+      "quantity",
+      "unit",
+      "location",
+      "price",
+      "notes",
+      "lat",
+      "lng",
+      "geoFormatted",
+      "status",
+    ])
+  );
   save();
   res.json(l);
 });
@@ -282,7 +304,7 @@ app.patch('/api/requests/:id', requireAuth, (req, res) => {
   if (r.buyerEmail !== req.userEmail && !ownsListing) {
     return res.status(403).json({ error: 'Not allowed to update this request.' });
   }
-  Object.assign(r, req.body || {});
+  Object.assign(r, pick(req.body, ["status", "notes"]));
   save();
   res.json(r);
 });
@@ -325,14 +347,13 @@ app.get('/api/opportunities', requireAuth, (req, res) => {
 app.post('/api/opportunities', requireAuth, (req, res) => {
   const b = req.body || {};
   const opp = {
+    ...b, // client-supplied listing/request details + coords
     id: newId('opp'),
-    sellerEmail: req.userEmail,
+    sellerEmail: req.userEmail, // server-controlled fields win
     createdAt: new Date().toISOString(),
     status: 'open',
     awardedBidId: null,
-    ...b,
   };
-  opp.id = opp.id || newId('opp');
   data.opportunities.unshift(opp);
   save();
   res.json(opp);
@@ -344,7 +365,7 @@ app.patch('/api/opportunities/:id', requireAuth, (req, res) => {
   if (o.sellerEmail && o.sellerEmail !== req.userEmail) {
     return res.status(403).json({ error: 'Not your opportunity.' });
   }
-  Object.assign(o, req.body || {});
+  Object.assign(o, pick(req.body, ["status", "notes"]));
   save();
   res.json(o);
 });
@@ -357,6 +378,12 @@ app.post('/api/opportunities/:id/award', requireAuth, (req, res) => {
     return res.status(403).json({ error: 'Not your opportunity.' });
   }
   const { bidId } = req.body || {};
+  const winning = data.bids.find(
+    (b) => String(b.id) === String(bidId) && String(b.oppId) === String(o.id)
+  );
+  if (!winning) {
+    return res.status(400).json({ error: 'Bid not found for this opportunity.' });
+  }
   o.status = 'awarded';
   o.awardedBidId = bidId;
   data.bids.forEach((b) => {
@@ -441,12 +468,28 @@ app.delete('/api/bids/:id', requireAuth, (req, res) => {
  * Messages
  * ------------------------------------------------------------------ */
 
+// A user's role on a request-based thread ('buyer' | 'seller'), or null if they
+// don't participate.
+function threadRole(threadId, email) {
+  const request = data.requests.find((r) => String(r.id) === String(threadId));
+  if (!request) return null;
+  if (request.buyerEmail === email) return "buyer";
+  const listing = data.listings.find(
+    (l) => String(l.id) === String(request.listingId)
+  );
+  if (listing && listing.sellerEmail === email) return "seller";
+  return null;
+}
+
 app.get('/api/messages', requireAuth, (req, res) => {
-  // Messages the user sent, or on threads they participate in. For the
-  // prototype, return threads the user has sent on plus any thread id queried.
   const threadId = req.query.threadId;
   if (threadId) {
-    return res.json(data.messages.filter((m) => String(m.threadId) === String(threadId)));
+    if (!threadRole(threadId, req.userEmail)) {
+      return res.status(403).json({ error: "Not a participant in this thread." });
+    }
+    return res.json(
+      data.messages.filter((m) => String(m.threadId) === String(threadId))
+    );
   }
   res.json(data.messages.filter((m) => m.senderEmail === req.userEmail));
 });
@@ -499,12 +542,19 @@ app.get('/api/threads', requireAuth, (req, res) => {
 
 app.post('/api/messages', requireAuth, (req, res) => {
   const b = req.body || {};
+  const role = threadRole(b.threadId, req.userEmail);
+  if (!role) {
+    return res.status(403).json({ error: "Not a participant in this thread." });
+  }
+  if (!b.text || !String(b.text).trim()) {
+    return res.status(400).json({ error: "Message text is required." });
+  }
   const msg = {
     id: newId('msg'),
     threadId: b.threadId,
     senderEmail: req.userEmail,
-    fromRole: b.fromRole ?? 'buyer',
-    text: b.text ?? '',
+    fromRole: role, // derived server-side, never trusted from the client
+    text: String(b.text).trim(),
     createdAt: new Date().toISOString(),
   };
   data.messages.push(msg);
