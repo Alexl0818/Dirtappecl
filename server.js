@@ -52,9 +52,22 @@ function publicUser(account) {
 
 // Read-time enrichment: attach the counterparty's display name/company so the
 // UI can show who you're dealing with (without duplicating it in storage).
+function ratingFor(email) {
+  const rs = data.reviews.filter((r) => r.toEmail === email);
+  if (!rs.length) return { avg: 0, count: 0 };
+  const avg = rs.reduce((s, r) => s + Number(r.rating || 0), 0) / rs.length;
+  return { avg: Math.round(avg * 10) / 10, count: rs.length };
+}
 function withSeller(l) {
   const a = data.accounts[l.sellerEmail];
-  return { ...l, sellerName: a?.name || "", sellerCompany: a?.company || "" };
+  const r = ratingFor(l.sellerEmail);
+  return {
+    ...l,
+    sellerName: a?.name || "",
+    sellerCompany: a?.company || "",
+    sellerRating: r.avg,
+    sellerRatingCount: r.count,
+  };
 }
 function withBuyer(r) {
   const a = data.accounts[r.buyerEmail];
@@ -497,6 +510,57 @@ app.post('/api/messages', requireAuth, (req, res) => {
   data.messages.push(msg);
   save();
   res.json(msg);
+});
+
+/* ------------------------------------------------------------------ *
+ * Reviews
+ * ------------------------------------------------------------------ */
+
+app.post('/api/reviews', requireAuth, (req, res) => {
+  const { toEmail, rating, comment, oppId } = req.body || {};
+  const r = Number(rating);
+  if (!toEmail || !data.accounts[toEmail]) {
+    return res.status(400).json({ error: 'Invalid recipient.' });
+  }
+  if (toEmail === req.userEmail) {
+    return res.status(400).json({ error: "You can't review yourself." });
+  }
+  if (!Number.isFinite(r) || r < 1 || r > 5) {
+    return res.status(400).json({ error: 'Rating must be 1–5.' });
+  }
+  // One review per reviewer -> recipient -> opportunity (update if it exists).
+  const existing = data.reviews.find(
+    (x) =>
+      x.fromEmail === req.userEmail &&
+      x.toEmail === toEmail &&
+      String(x.oppId) === String(oppId)
+  );
+  if (existing) {
+    existing.rating = r;
+    existing.comment = (comment || '').trim();
+    save();
+    return res.json(existing);
+  }
+  const review = {
+    id: newId('rev'),
+    fromEmail: req.userEmail,
+    toEmail,
+    rating: r,
+    comment: (comment || '').trim(),
+    oppId: oppId || null,
+    createdAt: new Date().toISOString(),
+  };
+  data.reviews.push(review);
+  save();
+  res.json(review);
+});
+
+// The signed-in user's submitted reviews (optionally for one opportunity).
+app.get('/api/reviews/mine', requireAuth, (req, res) => {
+  const { oppId } = req.query;
+  let mine = data.reviews.filter((x) => x.fromEmail === req.userEmail);
+  if (oppId) mine = mine.filter((x) => String(x.oppId) === String(oppId));
+  res.json(mine);
 });
 
 /* ------------------------------------------------------------------ *

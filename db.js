@@ -22,6 +22,7 @@ const EMPTY = {
   opportunities: [],
   bids: [],
   messages: [], // { id, threadId, senderEmail, fromRole, text, createdAt }
+  reviews: [], // { id, fromEmail, toEmail, rating, comment, oppId, createdAt }
 };
 
 let data;

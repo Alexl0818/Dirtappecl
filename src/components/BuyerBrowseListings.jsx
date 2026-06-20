@@ -197,6 +197,11 @@ export default function BuyerBrowseListings() {
                   {l?.sellerCompany || l?.sellerName ? (
                     <div style={{ marginTop: 4, fontSize: "0.78rem", opacity: 0.7 }}>
                       Posted by {l.sellerCompany || l.sellerName}
+                      {l?.sellerRatingCount > 0 ? (
+                        <span style={{ marginLeft: 6, color: "#facc15" }}>
+                          ★ {l.sellerRating} ({l.sellerRatingCount})
+                        </span>
+                      ) : null}
                     </div>
                   ) : null}
 

@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import GlassCard from "./GlassCard";
 import BottomNav from "./BottomNav";
 import RouteMiniMap from "./RouteMiniMap";
+import StarRating from "./StarRating";
 import { hasCoords } from "../lib/maps";
+import { api } from "../lib/api";
 import { useInquiry } from "./InquiryContext";
 import { useHaulBids } from "./HaulBidContext";
 import { useSellerListings } from "./SellerListingContext";
@@ -77,6 +79,51 @@ export default function BuyerRequestDetails() {
     (l) => String(l.id) === String(request?.listingId)
   );
   const sellerName = listing?.sellerCompany || listing?.sellerName || "the seller";
+  const sellerEmail = listing?.sellerEmail;
+  const completed = opp?.status === "completed";
+
+  const [rating, setRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewSaved, setReviewSaved] = useState(false);
+
+  // Load any review I've already left for this completed order.
+  useEffect(() => {
+    let active = true;
+    if (completed && sellerEmail && opp?.id) {
+      api
+        .get(`/reviews/mine?oppId=${encodeURIComponent(opp.id)}`)
+        .then((revs) => {
+          if (!active) return;
+          const mine = (Array.isArray(revs) ? revs : []).find(
+            (r) => r.toEmail === sellerEmail
+          );
+          if (mine) {
+            setRating(mine.rating);
+            setReviewComment(mine.comment || "");
+            setReviewSaved(true);
+          }
+        })
+        .catch(() => {});
+    }
+    return () => {
+      active = false;
+    };
+  }, [completed, sellerEmail, opp?.id]);
+
+  const submitReview = async () => {
+    if (!rating || !sellerEmail || !opp?.id) return;
+    try {
+      await api.post("/reviews", {
+        toEmail: sellerEmail,
+        rating,
+        comment: reviewComment,
+        oppId: opp.id,
+      });
+      setReviewSaved(true);
+    } catch (e) {
+      console.error("review failed", e.message);
+    }
+  };
 
   const messageSeller = () =>
     navigate("/messages/thread", {
@@ -180,6 +227,37 @@ export default function BuyerRequestDetails() {
             </GlassCard>
           );
         })()}
+
+        {completed && sellerEmail ? (
+          <GlassCard className="dashboard-card" style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
+              Rate the seller
+            </div>
+            <StarRating value={rating} onChange={setRating} size={26} />
+            <textarea
+              className="field-input"
+              style={{ marginTop: 10, width: "100%" }}
+              rows={2}
+              placeholder="Optional comment"
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+            />
+            <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10 }}>
+              <button
+                className="primary-button"
+                onClick={submitReview}
+                disabled={!rating}
+              >
+                {reviewSaved ? "Update rating" : "Submit rating"}
+              </button>
+              {reviewSaved ? (
+                <span style={{ color: "#4ade80", fontSize: 13 }}>
+                  Thanks for rating!
+                </span>
+              ) : null}
+            </div>
+          </GlassCard>
+        ) : null}
 
         {hasCoords(request) ? (
           <GlassCard className="dashboard-card" style={{ marginTop: 12 }}>

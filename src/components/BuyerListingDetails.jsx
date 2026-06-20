@@ -74,6 +74,11 @@ function BuyerListingDetails() {
           <p className="buyer-details-label">Seller</p>
           <p className="buyer-details-value">
             {listing.sellerCompany || listing.sellerName || "—"}
+            {listing.sellerRatingCount > 0 ? (
+              <span style={{ marginLeft: 8, color: "#facc15", fontSize: "0.9rem" }}>
+                ★ {listing.sellerRating} ({listing.sellerRatingCount})
+              </span>
+            ) : null}
           </p>
 
           <div className="buyer-details-grid">
