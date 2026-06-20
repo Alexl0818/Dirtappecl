@@ -68,6 +68,14 @@ export function HaulBidProvider({ children }) {
     return opportunity;
   }
 
+  async function completeOpportunity(oppId) {
+    const updated = await api.post(`/opportunities/${oppId}/complete`, {});
+    setOpportunities((prev) =>
+      prev.map((o) => (String(o.id) === String(oppId) ? updated : o))
+    );
+    return updated;
+  }
+
   async function clearOpportunities() {
     const mine = opportunities.filter((o) => o.sellerEmail === user?.email);
     await Promise.all(
@@ -95,6 +103,7 @@ export function HaulBidProvider({ children }) {
       addOpportunity,
       addBid,
       awardBid,
+      completeOpportunity,
       clearOpportunities,
       clearBids,
       getBidsForOpportunity,

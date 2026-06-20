@@ -59,7 +59,10 @@ export default function SellerInquiryDetails() {
       .sort((a, b) => Number(a.amount || 0) - Number(b.amount || 0));
   }, [safeBids, oppForAcceptedRequest]);
 
-  const isLocked = !!oppForAcceptedRequest && oppForAcceptedRequest.status === "awarded";
+  const isLocked =
+    !!oppForAcceptedRequest &&
+    (oppForAcceptedRequest.status === "awarded" ||
+      oppForAcceptedRequest.status === "completed");
 
   const awardedBid = useMemo(() => {
     if (!oppForAcceptedRequest?.awardedBidId) return null;

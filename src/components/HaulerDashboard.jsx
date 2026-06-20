@@ -129,7 +129,14 @@ export default function HaulerDashboard() {
                 const o = oppById(b.oppId);
                 const won = b.status === "awarded";
                 const lost = b.status === "rejected";
-                const label = won ? "Won" : lost ? "Not selected" : "Pending";
+                const delivered = won && o?.status === "completed";
+                const label = delivered
+                  ? "Delivered"
+                  : won
+                  ? "Won"
+                  : lost
+                  ? "Not selected"
+                  : "Pending";
                 const dist = o ? oppDistance(o) : null;
                 return (
                   <GlassCard key={b.id ?? `bid_${idx}`} className="dashboard-card">

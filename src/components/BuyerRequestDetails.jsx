@@ -20,6 +20,13 @@ function orderStatus(request, opp) {
   if (request.status === "declined") {
     return { label: "Declined", tone: "draft", detail: "The seller declined this request." };
   }
+  if (opp && opp.status === "completed") {
+    return {
+      label: "Delivered",
+      tone: "active",
+      detail: `Delivered${opp.awardedHaulerName ? ` by ${opp.awardedHaulerName}` : ""} — this order is complete.`,
+    };
+  }
   if (opp && opp.status === "awarded") {
     const parts = [
       opp.awardedHaulerName || "A hauler",

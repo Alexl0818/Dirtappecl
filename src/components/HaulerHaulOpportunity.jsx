@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useHaulBid } from "./HaulBidContext.jsx";
+import { useAuth } from "./AuthContext";
 import { distanceMiles } from "../lib/maps";
 import RouteMiniMap from "./RouteMiniMap";
 
@@ -8,7 +9,8 @@ export default function HaulerHaulOpportunity() {
   const { oppId } = useParams();
   const navigate = useNavigate();
 
-  const { opportunities, bids, addBid } = useHaulBid();
+  const { opportunities, bids, addBid, completeOpportunity } = useHaulBid();
+  const { user } = useAuth();
 
   const safeOpps = Array.isArray(opportunities) ? opportunities : [];
   const safeBids = Array.isArray(bids) ? bids : [];
@@ -25,8 +27,18 @@ export default function HaulerHaulOpportunity() {
       .sort((a, b) => Number(a.amount || 0) - Number(b.amount || 0));
   }, [safeBids, opp]);
 
-  const isLocked = !!opp && opp.status === "awarded";
+  const isLocked = !!opp && (opp.status === "awarded" || opp.status === "completed");
+  const isCompleted = !!opp && opp.status === "completed";
   const winnerBidId = opp?.awardedBidId;
+  // Did the current hauler win this one?
+  const iWon =
+    !!opp &&
+    (opp.status === "awarded" || opp.status === "completed") &&
+    safeBids.some(
+      (b) =>
+        String(b.id) === String(opp.awardedBidId) &&
+        b.haulerEmail === user?.email
+    );
 
   const [amount, setAmount] = useState("");
   const [availability, setAvailability] = useState("");
@@ -132,10 +144,25 @@ export default function HaulerHaulOpportunity() {
                   border: "1px solid rgba(34,197,94,0.25)",
                 }}
               >
-                <div style={{ fontWeight: 800 }}>Awarded</div>
-                <div style={{ opacity: 0.85, fontSize: 13, marginTop: 6 }}>
-                  Bidding is locked.
+                <div style={{ fontWeight: 800 }}>
+                  {isCompleted ? "Delivered ✓" : "Awarded"}
                 </div>
+                <div style={{ opacity: 0.85, fontSize: 13, marginTop: 6 }}>
+                  {isCompleted
+                    ? "This haul is complete."
+                    : iWon
+                    ? "You won this haul. Mark it delivered once the material is dropped off."
+                    : "Bidding is locked."}
+                </div>
+                {iWon && !isCompleted ? (
+                  <button
+                    className="btn btn-primary"
+                    style={{ marginTop: 10 }}
+                    onClick={() => completeOpportunity(opp.id)}
+                  >
+                    Mark delivered
+                  </button>
+                ) : null}
               </div>
             )}
           </div>

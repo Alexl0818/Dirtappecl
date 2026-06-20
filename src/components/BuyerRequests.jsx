@@ -52,9 +52,14 @@ export default function BuyerRequests() {
               const address = r?.address ?? "";
               const status = r?.status ?? "open";
               const opp = opps.find((o) => String(o.requestId) === String(r?.id));
+              const completed = opp?.status === "completed";
               const awarded = opp?.status === "awarded";
-              const label = awarded ? "Hauler assigned" : status;
-              const good = awarded || status === "accepted";
+              const label = completed
+                ? "Delivered"
+                : awarded
+                ? "Hauler assigned"
+                : status;
+              const good = completed || awarded || status === "accepted";
               const createdAt = r?.createdAt
                 ? new Date(r.createdAt).toLocaleString()
                 : "";

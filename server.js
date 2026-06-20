@@ -354,6 +354,26 @@ app.post('/api/opportunities/:id/award', requireAuth, (req, res) => {
   res.json({ opportunity: o, bids: data.bids.filter((b) => String(b.oppId) === String(o.id)) });
 });
 
+// Mark an awarded haul as delivered/completed. Allowed for the seller who owns
+// the opportunity or the awarded hauler.
+app.post('/api/opportunities/:id/complete', requireAuth, (req, res) => {
+  const o = data.opportunities.find((x) => String(x.id) === String(req.params.id));
+  if (!o) return res.status(404).json({ error: 'Opportunity not found.' });
+  if (o.status !== 'awarded') {
+    return res.status(400).json({ error: 'Only an awarded haul can be completed.' });
+  }
+  const awardedBid = data.bids.find((b) => String(b.id) === String(o.awardedBidId));
+  const isSeller = o.sellerEmail === req.userEmail;
+  const isAwardedHauler = awardedBid && awardedBid.haulerEmail === req.userEmail;
+  if (!isSeller && !isAwardedHauler) {
+    return res.status(403).json({ error: 'Not allowed to complete this haul.' });
+  }
+  o.status = 'completed';
+  o.completedAt = new Date().toISOString();
+  save();
+  res.json(o);
+});
+
 // Visible: your own bids (as hauler) + bids on your opportunities (as seller).
 app.get('/api/bids', requireAuth, (req, res) => {
   const myOppIds = new Set(
