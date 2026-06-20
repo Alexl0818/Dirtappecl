@@ -1,5 +1,24 @@
 # Session Changelog — Hardening & Geo Map
 
+## 🛡️ Polish & harden pass (latest)
+
+Full code audit + live regression (no new features). Fixes:
+- **Messaging authorization** (was the real gap): read/post now require thread
+  participation; message role is derived server-side, never trusted from the client.
+- **Body-trust hardening:** opportunity POST keeps server-controlled fields;
+  PATCH listings/requests/opportunities whitelist patchable fields (no overwriting
+  id/owner/createdAt); award validates the bid belongs to the opportunity.
+- **Cleanups:** MessageThread guards send without a real thread + handles errors;
+  removed misleading always-"No" Haul-Included row; dropped dead client-assigned
+  request id/createdAt.
+- **Audit-confirmed OK:** stable keys, no conditional hooks, effect cleanup,
+  empty states, 5-tab BottomNav fits at 375px, no stray console logs.
+- **Regression:** verified messaging (both directions + 403 for non-participants),
+  PATCH whitelist (price updates, owner protected), and every role's main screens
+  render clean. Console clean throughout.
+
+
+
 ## ⭐ Ratings & reviews (latest)
 
 After a delivered order, buyers rate the seller (1–5 stars + comment). Ratings
