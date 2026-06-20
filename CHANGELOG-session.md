@@ -1,6 +1,13 @@
 # Session Changelog — Hardening & Geo Map
 
-## 🔔 Notifications + full lifecycle (latest)
+## ⭐ Ratings & reviews (latest)
+
+After a delivered order, buyers rate the seller (1–5 stars + comment). Ratings
+aggregate per seller and show on Browse + Listing Details ("★ avg (count)") — a
+trust signal at browse time. Reusable `StarRating`; `reviews` store; one review
+per reviewer→seller→order (updatable). Verified live.
+
+## 🔔 Notifications + full lifecycle
 
 - **Nav notification badges:** Sell shows open buyer requests on your listings;
   Haul shows open opportunities you haven't bid on.
