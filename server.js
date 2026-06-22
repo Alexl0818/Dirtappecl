@@ -140,6 +140,72 @@ function requireVerified(req, res, next) {
 }
 
 /* ------------------------------------------------------------------ *
+ * Billing / subscriptions
+ *
+ * Free for everyone until a user-count threshold, then role-based:
+ *  - end users (buyers/sellers): 1 free post/month, then a subscription
+ *  - haulers: a flat subscription to place any bids
+ * Real charging is done by Stripe later (see /api/billing/subscribe stub).
+ * ------------------------------------------------------------------ */
+
+const BILLING = {
+  threshold: Number(process.env.FREE_USER_THRESHOLD || 100),
+  forceEnabled: process.env.BILLING_ENABLED === 'true',
+  freePostsPerMonth: Number(process.env.FREE_POSTS_PER_MONTH || 1),
+  enduserPrice: process.env.ENDUSER_PRICE || '$10–15/mo',
+  haulerPrice: process.env.HAULER_PRICE || '$250–400/mo',
+};
+
+const accountCount = () => Object.keys(data.accounts).length;
+// Paid mode kicks in once we pass the free-user threshold (or via env override).
+const billingActive = () => BILLING.forceEnabled || accountCount() >= BILLING.threshold;
+
+function isSubscribed(account, plan) {
+  const s = account?.subscription;
+  if (!s || s.status !== 'active') return false;
+  if (plan && s.plan !== plan) return false;
+  if (s.currentPeriodEnd && new Date(s.currentPeriodEnd) < new Date()) return false;
+  return true;
+}
+
+const monthKey = (d = new Date()) => `${d.getUTCFullYear()}-${d.getUTCMonth() + 1}`;
+function postsThisMonth(email) {
+  const mk = monthKey();
+  const inMonth = (ts) => {
+    try { return monthKey(new Date(ts)) === mk; } catch { return false; }
+  };
+  const listings = data.listings.filter((x) => x.sellerEmail === email && inMonth(x.createdAt)).length;
+  const requests = data.requests.filter((x) => x.buyerEmail === email && inMonth(x.createdAt)).length;
+  return listings + requests;
+}
+
+// End-user posting gate: free until the monthly allowance, then needs a sub.
+function requireCanPost(req, res, next) {
+  if (!billingActive()) return next();
+  const account = data.accounts[req.userEmail];
+  if (isSubscribed(account, 'enduser')) return next();
+  if (postsThisMonth(req.userEmail) >= BILLING.freePostsPerMonth) {
+    return res.status(402).json({
+      error: `You've used your free post for this month. Subscribe (${BILLING.enduserPrice}) to post more.`,
+      code: 'subscription_required',
+      plan: 'enduser',
+    });
+  }
+  next();
+}
+
+// Hauler bidding gate: a hauler subscription is required to bid at all.
+function requireHaulerPlan(req, res, next) {
+  if (!billingActive()) return next();
+  if (isSubscribed(data.accounts[req.userEmail], 'hauler')) return next();
+  return res.status(402).json({
+    error: `A hauler subscription (${BILLING.haulerPrice}) is required to place bids.`,
+    code: 'subscription_required',
+    plan: 'hauler',
+  });
+}
+
+/* ------------------------------------------------------------------ *
  * Auth + profile
  * ------------------------------------------------------------------ */
 
@@ -162,6 +228,7 @@ app.post('/api/auth/signup', (req, res) => {
     roles: { buyer: true, seller: false, hauler: false },
     verified: false,
     verifyToken,
+    subscription: { status: 'none', plan: null, currentPeriodEnd: null },
     createdAt: new Date().toISOString(),
   };
   data.accounts[cleanEmail] = account;
@@ -261,7 +328,7 @@ app.get('/api/listings', requireAuth, (req, res) => {
   res.json(data.listings.map(withSeller));
 });
 
-app.post('/api/listings', requireAuth, requireVerified, (req, res) => {
+app.post('/api/listings', requireAuth, requireVerified, requireCanPost, (req, res) => {
   const b = req.body || {};
   const listing = {
     id: newId('lst'),
@@ -334,7 +401,7 @@ app.get('/api/requests', requireAuth, (req, res) => {
   res.json(visible.map(withBuyer));
 });
 
-app.post('/api/requests', requireAuth, requireVerified, (req, res) => {
+app.post('/api/requests', requireAuth, requireVerified, requireCanPost, (req, res) => {
   const b = req.body || {};
   const request = {
     id: newId('req'),
@@ -527,7 +594,7 @@ app.get('/api/bids', requireAuth, (req, res) => {
   res.json(visible.map(withHauler));
 });
 
-app.post('/api/bids', requireAuth, requireVerified, (req, res) => {
+app.post('/api/bids', requireAuth, requireVerified, requireHaulerPlan, (req, res) => {
   const b = req.body || {};
   const bid = {
     id: newId('bid'),
@@ -739,6 +806,50 @@ app.get('/api/reviews/mine', requireAuth, (req, res) => {
   let mine = data.reviews.filter((x) => x.fromEmail === req.userEmail);
   if (oppId) mine = mine.filter((x) => String(x.oppId) === String(oppId));
   res.json(mine);
+});
+
+/* ------------------------------------------------------------------ *
+ * Billing endpoints
+ * ------------------------------------------------------------------ */
+
+app.get('/api/billing/status', requireAuth, (req, res) => {
+  const account = data.accounts[req.userEmail];
+  res.json({
+    billingActive: billingActive(),
+    userCount: accountCount(),
+    threshold: BILLING.threshold,
+    freePostsPerMonth: BILLING.freePostsPerMonth,
+    postsThisMonth: postsThisMonth(req.userEmail),
+    subscription: account.subscription || { status: 'none', plan: null, currentPeriodEnd: null },
+    prices: { enduser: BILLING.enduserPrice, hauler: BILLING.haulerPrice },
+  });
+});
+
+// STUB: real billing creates a Stripe Checkout session and confirms via webhook.
+// Here we just mark the account active so the gating can be exercised end-to-end.
+app.post('/api/billing/subscribe', requireAuth, (req, res) => {
+  const { plan } = req.body || {};
+  if (!['enduser', 'hauler'].includes(plan)) {
+    return res.status(400).json({ error: 'Invalid plan.' });
+  }
+  const account = data.accounts[req.userEmail];
+  const end = new Date();
+  end.setDate(end.getDate() + 30);
+  account.subscription = {
+    status: 'active',
+    plan,
+    currentPeriodEnd: end.toISOString(),
+    stub: true,
+  };
+  save();
+  res.json({ ok: true, subscription: account.subscription });
+});
+
+app.post('/api/billing/cancel', requireAuth, (req, res) => {
+  const account = data.accounts[req.userEmail];
+  account.subscription = { status: 'none', plan: null, currentPeriodEnd: null };
+  save();
+  res.json({ ok: true });
 });
 
 /* ------------------------------------------------------------------ *

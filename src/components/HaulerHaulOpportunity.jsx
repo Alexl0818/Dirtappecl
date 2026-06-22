@@ -45,15 +45,20 @@ export default function HaulerHaulOpportunity() {
   const [notes, setNotes] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
+  const [bidError, setBidError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!opp || isLocked) return;
 
     const cleanAmount = Number(amount);
-    if (!Number.isFinite(cleanAmount) || cleanAmount <= 0) return;
+    if (!Number.isFinite(cleanAmount) || cleanAmount <= 0) {
+      setBidError("Enter a bid amount greater than 0.");
+      return;
+    }
 
     setSubmitting(true);
+    setBidError("");
     try {
       await addBid({
         oppId: opp.id,
@@ -65,7 +70,7 @@ export default function HaulerHaulOpportunity() {
       setAvailability("");
       setNotes("");
     } catch (err) {
-      console.error("bid submit failed", err.message);
+      setBidError(err.message || "Could not place your bid.");
     } finally {
       setSubmitting(false);
     }
@@ -169,6 +174,12 @@ export default function HaulerHaulOpportunity() {
 
           <div className="dashboard-card" style={{ marginTop: 12 }}>
             <h3 style={{ marginTop: 0 }}>Submit Bid</h3>
+
+            {bidError ? (
+              <div className="form-error" style={{ marginBottom: 10 }}>
+                {bidError}
+              </div>
+            ) : null}
 
             <form onSubmit={handleSubmit} style={{ display: "grid", gap: 10 }}>
               <input

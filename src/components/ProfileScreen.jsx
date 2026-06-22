@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GlassCard from "./GlassCard";
 import BottomNav from "./BottomNav";
+import BillingCard from "./BillingCard";
 import { useAuth } from "./AuthContext";
 
 const ProfileScreen = () => {
@@ -129,6 +130,10 @@ const ProfileScreen = () => {
           <RolePill label="Hauler" active={roles.hauler} onClick={() => toggleRole("hauler")} />
         </div>
       </GlassCard>
+
+      <div style={{ marginTop: 12 }}>
+        <BillingCard />
+      </div>
 
       <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
         <button className="primary-button full-width" onClick={handleSave}>
