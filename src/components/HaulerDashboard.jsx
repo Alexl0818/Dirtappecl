@@ -44,9 +44,6 @@ export default function HaulerDashboard() {
             <h2 className="section-title">Haul</h2>
             <p className="section-subtitle">Open opportunities and your bids.</p>
           </div>
-          <button className="ghost-button" onClick={() => navigate("/mode")}>
-            Switch Mode
-          </button>
         </div>
 
         <div className="dashboard-grid kpi-grid">

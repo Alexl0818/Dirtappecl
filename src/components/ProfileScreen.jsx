@@ -18,7 +18,6 @@ const ProfileScreen = () => {
     email: "",
     region: "",
   });
-  const [roles, setRoles] = useState({ buyer: true, seller: false, hauler: false });
   const [saved, setSaved] = useState(false);
 
   // Sync form when the signed-in user loads/changes.
@@ -31,17 +30,11 @@ const ProfileScreen = () => {
       email: user.email || "",
       region: user.region || "",
     });
-    if (user.roles) setRoles({ buyer: false, seller: false, hauler: false, ...user.roles });
   }, [user]);
 
   const setField = (key) => (e) => {
     setSaved(false);
     setForm((p) => ({ ...p, [key]: e.target.value }));
-  };
-
-  const toggleRole = (key) => {
-    setSaved(false);
-    setRoles((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const handleSave = async () => {
@@ -50,7 +43,6 @@ const ProfileScreen = () => {
       company: form.company,
       phone: form.phone,
       region: form.region,
-      roles,
     });
     setSaved(true);
   };
@@ -90,7 +82,7 @@ const ProfileScreen = () => {
         Profile
       </h1>
       <p style={{ marginBottom: "16px", opacity: 0.8, fontSize: "13px" }}>
-        Manage your account details, contact info, and what roles you operate in.
+        Manage your account details and contact info.
       </p>
 
       {/* Account */}
@@ -116,19 +108,6 @@ const ProfileScreen = () => {
           onChange={setField("region")}
           placeholder="e.g. Charlotte, NC"
         />
-      </GlassCard>
-
-      {/* Roles */}
-      <GlassCard className="dashboard-card">
-        <h2 style={sectionTitle}>Roles</h2>
-        <p style={{ fontSize: "12px", opacity: 0.8, marginBottom: "10px" }}>
-          Turn on whichever roles apply to you. You can change these anytime.
-        </p>
-        <div style={{ display: "flex", gap: "8px", marginBottom: "6px" }}>
-          <RolePill label="Buyer" active={roles.buyer} onClick={() => toggleRole("buyer")} />
-          <RolePill label="Seller" active={roles.seller} onClick={() => toggleRole("seller")} />
-          <RolePill label="Hauler" active={roles.hauler} onClick={() => toggleRole("hauler")} />
-        </div>
       </GlassCard>
 
       <div style={{ marginTop: 12 }}>
@@ -173,28 +152,6 @@ const Field = ({ label, value, onChange, placeholder, disabled }) => (
       }}
     />
   </div>
-);
-
-const RolePill = ({ label, active, onClick }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    style={{
-      flex: 1,
-      padding: "8px 10px",
-      borderRadius: "999px",
-      border: active ? "1px solid rgba(74,222,128,0.9)" : "1px solid rgba(148,163,184,0.7)",
-      background: active
-        ? "radial-gradient(circle at top, #16a34a, #15803d)"
-        : "rgba(15,23,42,0.8)",
-      color: active ? "white" : "#e5e7eb",
-      fontSize: "12px",
-      fontWeight: active ? 600 : 500,
-      cursor: "pointer",
-    }}
-  >
-    {label}
-  </button>
 );
 
 export default ProfileScreen;

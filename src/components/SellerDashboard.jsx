@@ -81,11 +81,6 @@ export default function SellerDashboard() {
               Open a listing to review its buyer requests.
             </div>
           </GlassCard>
-
-          <GlassCard className="dashboard-card nav-card" onClick={() => navigate("/mode")}>
-            <div className="card-title">Switch Mode</div>
-            <div className="card-description">Go back to Buyer / Hauler selection.</div>
-          </GlassCard>
         </div>
       </main>
 

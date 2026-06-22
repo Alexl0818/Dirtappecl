@@ -225,7 +225,6 @@ app.post('/api/auth/signup', (req, res) => {
     company: (company || '').trim(),
     phone: '',
     region: '',
-    roles: { buyer: true, seller: false, hauler: false },
     verified: false,
     verifyToken,
     subscription: { status: 'none', plan: null, currentPeriodEnd: null },
@@ -309,12 +308,11 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
 
 app.patch('/api/profile', requireAuth, (req, res) => {
   const account = data.accounts[req.userEmail];
-  const { name, company, phone, region, roles } = req.body || {};
+  const { name, company, phone, region } = req.body || {};
   if (name !== undefined) account.name = name;
   if (company !== undefined) account.company = company;
   if (phone !== undefined) account.phone = phone;
   if (region !== undefined) account.region = region;
-  if (roles !== undefined) account.roles = roles;
   save();
   res.json({ user: publicUser(account) });
 });

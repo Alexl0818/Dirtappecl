@@ -25,7 +25,7 @@ const LoginScreen = () => {
       setError(result.error);
       return;
     }
-    navigate("/mode");
+    navigate("/buyer/home");
   };
 
   return (

@@ -30,7 +30,7 @@ const SignupScreen = () => {
       setError(result.error);
       return;
     }
-    navigate("/mode");
+    navigate("/buyer/home");
   };
 
   return (

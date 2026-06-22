@@ -55,7 +55,7 @@ export default function VerifyEmail() {
               </div>
               <button
                 className="primary-button full-width"
-                onClick={() => navigate("/mode")}
+                onClick={() => navigate("/buyer/home")}
               >
                 Continue
               </button>

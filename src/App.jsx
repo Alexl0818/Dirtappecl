@@ -10,7 +10,6 @@ import { MessageProvider } from "./components/MessageContext";
 import WelcomeScreen from "./components/WelcomeScreen";
 import LoginScreen from "./components/LoginScreen";
 import SignupScreen from "./components/SignupScreen";
-import ModeSelectScreen from "./components/ModeSelectScreen";
 
 import BuyerHome from "./components/BuyerHome";
 import BuyerRequest from "./components/BuyerRequest";
@@ -59,7 +58,6 @@ function AppInner() {
 
       {/* Everything below requires a signed-in user */}
       <Route element={<RequireAuth />}>
-      <Route path="/mode" element={<ModeSelectScreen />} />
 
       {/* Buyer */}
       <Route path="/buyer/home" element={<BuyerHome />} />
