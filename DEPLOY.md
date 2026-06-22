@@ -32,6 +32,21 @@ That's it. No API keys or external accounts required.
   `server.js` handlers) is **Replit Database** (`@replit/database`, free,
   built-in) or Postgres/Supabase. The API surface is already isolated for this.
 
+## Email (notifications + verification)
+
+The app sends transactional emails (new request, accept/decline, new bid, award,
+delivered, new message) and an account-verification link on signup.
+
+- **Without config:** it uses an **Ethereal test inbox** — emails aren't really
+  delivered; a preview URL is logged to the server console. Fine for testing.
+- **To send real email:** set these env vars (Replit Secrets) and restart:
+  - `SMTP_HOST`, `SMTP_PORT` (587 or 465), `SMTP_USER`, `SMTP_PASS`
+  - `MAIL_FROM` (e.g. `SoilConnect <no-reply@yourdomain.com>`)
+  - `APP_URL` (your deployed URL, so links in emails point to the right place)
+
+  Any SMTP provider works (e.g. a free tier of Brevo/Mailjet/Resend-SMTP, or
+  Gmail with an app password for low volume).
+
 ## Optional: AI assistant
 
 `server.js` has an unused `/api/chat` endpoint. To enable it later, add an

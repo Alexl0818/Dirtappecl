@@ -1,5 +1,19 @@
 # Session Changelog — Hardening & Geo Map
 
+## 📧 Email notifications + account verification (latest)
+
+- **Transactional emails** on every key event (new request → seller,
+  accept/decline → buyer, new bid → seller, award → hauler, delivered → buyer,
+  new message → recipient). Pipeline (`email.js`, nodemailer) uses real SMTP when
+  configured (env), else an Ethereal test inbox with logged preview URLs. Sends
+  are best-effort/non-blocking.
+- **Account email verification:** signup emails a verify link; `/verify` page +
+  endpoint confirm it; "verify your email" banner with Resend; verified status on
+  the account. Soft (doesn't lock actions during the prototype).
+- Config for real email is in `DEPLOY.md`. Verified live via Ethereal preview URLs.
+
+
+
 ## 🛡️ Polish & harden pass (latest)
 
 Full code audit + live regression (no new features). Fixes:
