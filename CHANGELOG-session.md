@@ -1,5 +1,19 @@
 # Session Changelog — Hardening & Geo Map
 
+## 💳 Subscription/billing engine (latest)
+
+Wired the monetization model into the backend: **free for all until a user
+threshold, then role-based plans** — end users get 1 free post/month then need a
+Poster sub ($10–15); haulers need a flat Hauler sub ($250–400) to bid (filters
+spam/undercutters). Gated actions return **402**; per-account subscription state;
+monthly post metering; config via env. `POST /api/billing/subscribe` is a **stub**
+(Stripe Checkout + webhooks drop in there — no card charged yet). Profile shows a
+**Plan & billing** card (free-period note / active plan / subscribe / cancel).
+Verified live: free mode unrestricted; paid mode gates 2nd post + hauler bids, and
+subscribing unlocks. Default left in free mode (Phase 1). Config in `DEPLOY.md`.
+
+
+
 ## 📍 Tightened address entry (latest)
 
 Addresses on listings + requests are now validated before posting: a reusable

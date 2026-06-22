@@ -47,6 +47,22 @@ delivered, new message) and an account-verification link on signup.
   Any SMTP provider works (e.g. a free tier of Brevo/Mailjet/Resend-SMTP, or
   Gmail with an app password for low volume).
 
+## Billing / subscriptions
+
+Free for everyone until a user-count threshold, then role-based plans (end users:
+1 free post/month then a Poster sub; haulers: a flat sub to bid).
+
+- **Stays free** until `FREE_USER_THRESHOLD` accounts (default 100). Force paid
+  mode anytime with `BILLING_ENABLED=true`.
+- Tunable via env: `FREE_USER_THRESHOLD`, `FREE_POSTS_PER_MONTH`,
+  `ENDUSER_PRICE`, `HAULER_PRICE`, `BILLING_ENABLED`.
+- **No card is charged yet.** `POST /api/billing/subscribe` is a stub that marks
+  the account active. To go live: replace that stub with a **Stripe Checkout**
+  session and add a **Stripe webhook** that sets `account.subscription`
+  (status/plan/currentPeriodEnd) on `checkout.session.completed` /
+  `customer.subscription.updated|deleted`. All the gating (402 `subscription_required`,
+  metering, role plans) is already in place — only the payment seam is left.
+
 ## Optional: AI assistant
 
 `server.js` has an unused `/api/chat` endpoint. To enable it later, add an
