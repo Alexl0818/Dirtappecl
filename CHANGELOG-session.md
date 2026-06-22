@@ -1,5 +1,17 @@
 # Session Changelog — Hardening & Geo Map
 
+## 📍 Tightened address entry (latest)
+
+Addresses on listings + requests are now validated before posting: a reusable
+`AddressField` geocodes on blur/Check, confirms the matched address inline (✓) or
+shows a clear error, and **blocks submission until the address resolves**. No more
+listings/requests saved without coordinates (which caused map gaps/no distance) or
+non-empty-but-bogus addresses. Verified live on both forms.
+(Trade-off: relies on the geocoder being reachable; with a paid geocoder in
+production this is more robust than the free Nominatim used now.)
+
+
+
 ## ⭐ Hauler ratings (latest)
 
 Buyers now rate the **hauler** after delivery too (not just the seller). Each
