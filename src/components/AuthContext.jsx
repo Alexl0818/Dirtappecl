@@ -87,8 +87,9 @@ export function AuthProvider({ children }) {
 
   async function resendVerification() {
     try {
-      await api.post("/auth/resend-verification");
-      return { ok: true };
+      const res = await api.post("/auth/resend-verification");
+      // In environments with no mail provider, the server returns a direct link.
+      return { ok: true, verifyUrl: res?.verifyUrl };
     } catch (e) {
       return { ok: false, error: e.message };
     }

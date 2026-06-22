@@ -7,9 +7,12 @@
   new message → recipient). Pipeline (`email.js`, nodemailer) uses real SMTP when
   configured (env), else an Ethereal test inbox with logged preview URLs. Sends
   are best-effort/non-blocking.
-- **Account email verification:** signup emails a verify link; `/verify` page +
-  endpoint confirm it; "verify your email" banner with Resend; verified status on
-  the account. Soft (doesn't lock actions during the prototype).
+- **Account email verification — REQUIRED:** signup emails a verify link;
+  `/verify` page + endpoint confirm it. Unverified users hit a **VerifyGate**
+  (can't use the app) and the server **rejects all writes** from unverified
+  accounts (403 `unverified`) — reads/browsing stay open. When no mail provider
+  is configured, the gate surfaces a one-click "Verify now" link so no one is
+  stuck. Verified live: write blocked → verify → app unlocks.
 - Config for real email is in `DEPLOY.md`. Verified live via Ethereal preview URLs.
 
 

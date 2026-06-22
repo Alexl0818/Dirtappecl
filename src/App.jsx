@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 
 import { AuthProvider, useAuth } from "./components/AuthContext";
@@ -32,6 +32,7 @@ import ProfileScreen from "./components/ProfileScreen";
 import MessageThread from "./components/MessageThread";
 import MessagesInbox from "./components/MessagesInbox";
 import VerifyEmail from "./components/VerifyEmail";
+import VerifyGate from "./components/VerifyGate";
 
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -40,56 +41,16 @@ import "./App.css";
 // Gate for protected routes: wait for auth to load, then require a signed-in
 // user (otherwise bounce to login).
 function RequireAuth() {
-  const { isAuthenticated, ready } = useAuth();
+  const { isAuthenticated, ready, user } = useAuth();
   if (!ready) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!user.verified) return <VerifyGate />; // email verification required
   return <Outlet />;
-}
-
-// A slim banner prompting unverified users to confirm their email.
-function VerifyBanner() {
-  const { user, ready, resendVerification } = useAuth();
-  const [sent, setSent] = useState(false);
-  if (!ready || !user || user.verified) return null;
-  return (
-    <div
-      style={{
-        background: "rgba(124,45,18,0.95)",
-        color: "#fed7aa",
-        padding: "8px 14px",
-        textAlign: "center",
-        fontSize: 13,
-        display: "flex",
-        gap: 10,
-        justifyContent: "center",
-        alignItems: "center",
-        flexWrap: "wrap",
-      }}
-    >
-      <span>Verify your email to get the verified badge.</span>
-      {sent ? (
-        <span style={{ color: "#fef3c7" }}>Sent — check your inbox.</span>
-      ) : (
-        <button
-          className="ghost-button"
-          style={{ borderColor: "#fed7aa", color: "#fed7aa" }}
-          onClick={async () => {
-            await resendVerification();
-            setSent(true);
-          }}
-        >
-          Resend email
-        </button>
-      )}
-    </div>
-  );
 }
 
 function AppInner() {
   return (
-    <>
-      <VerifyBanner />
-      <Routes>
+    <Routes>
       {/* Public */}
       <Route path="/" element={<WelcomeScreen />} />
       <Route path="/login" element={<LoginScreen />} />
@@ -200,7 +161,6 @@ function AppInner() {
       {/* Catch-all: send unknown URLs back to the welcome screen */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-    </>
   );
 }
 

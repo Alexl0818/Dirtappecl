@@ -2,7 +2,7 @@ import express from 'express';
 import crypto from 'crypto';
 import OpenAI from 'openai';
 import { data, save } from './db.js';
-import { sendMail, APP_URL } from './email.js';
+import { sendMail, APP_URL, EMAIL_TEST_MODE } from './email.js';
 
 const app = express();
 app.use(express.json());
@@ -120,6 +120,17 @@ function requireAuth(req, res, next) {
   next();
 }
 
+// Gate write actions behind a verified email (use after requireAuth).
+function requireVerified(req, res, next) {
+  if (!data.accounts[req.userEmail]?.verified) {
+    return res.status(403).json({
+      error: 'Please verify your email before doing that.',
+      code: 'unverified',
+    });
+  }
+  next();
+}
+
 /* ------------------------------------------------------------------ *
  * Auth + profile
  * ------------------------------------------------------------------ */
@@ -185,7 +196,10 @@ app.post('/api/auth/resend-verification', requireAuth, (req, res) => {
   if (!account.verifyToken) account.verifyToken = crypto.randomBytes(24).toString('hex');
   save();
   sendVerificationEmail(account);
-  res.json({ ok: true });
+  const resp = { ok: true };
+  // No real mail provider -> hand the link back so the user isn't stuck.
+  if (EMAIL_TEST_MODE) resp.verifyUrl = `${APP_URL}/verify?token=${account.verifyToken}`;
+  res.json(resp);
 });
 
 app.post('/api/auth/login', (req, res) => {
@@ -239,7 +253,7 @@ app.get('/api/listings', requireAuth, (req, res) => {
   res.json(data.listings.map(withSeller));
 });
 
-app.post('/api/listings', requireAuth, (req, res) => {
+app.post('/api/listings', requireAuth, requireVerified, (req, res) => {
   const b = req.body || {};
   const listing = {
     id: newId('lst'),
@@ -261,7 +275,7 @@ app.post('/api/listings', requireAuth, (req, res) => {
   res.json(listing);
 });
 
-app.patch('/api/listings/:id', requireAuth, (req, res) => {
+app.patch('/api/listings/:id', requireAuth, requireVerified, (req, res) => {
   const l = data.listings.find((x) => String(x.id) === String(req.params.id));
   if (!l) return res.status(404).json({ error: 'Listing not found.' });
   if (l.sellerEmail && l.sellerEmail !== req.userEmail) {
@@ -286,7 +300,7 @@ app.patch('/api/listings/:id', requireAuth, (req, res) => {
   res.json(l);
 });
 
-app.delete('/api/listings/:id', requireAuth, (req, res) => {
+app.delete('/api/listings/:id', requireAuth, requireVerified, (req, res) => {
   const idx = data.listings.findIndex((x) => String(x.id) === String(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'Listing not found.' });
   if (data.listings[idx].sellerEmail && data.listings[idx].sellerEmail !== req.userEmail) {
@@ -312,7 +326,7 @@ app.get('/api/requests', requireAuth, (req, res) => {
   res.json(visible.map(withBuyer));
 });
 
-app.post('/api/requests', requireAuth, (req, res) => {
+app.post('/api/requests', requireAuth, requireVerified, (req, res) => {
   const b = req.body || {};
   const request = {
     id: newId('req'),
@@ -345,7 +359,7 @@ app.post('/api/requests', requireAuth, (req, res) => {
   }
 });
 
-app.patch('/api/requests/:id', requireAuth, (req, res) => {
+app.patch('/api/requests/:id', requireAuth, requireVerified, (req, res) => {
   const r = data.requests.find((x) => String(x.id) === String(req.params.id));
   if (!r) return res.status(404).json({ error: 'Request not found.' });
   // The buyer who made it, or the seller who owns the listing, may update it.
@@ -370,7 +384,7 @@ app.patch('/api/requests/:id', requireAuth, (req, res) => {
   }
 });
 
-app.delete('/api/requests/:id', requireAuth, (req, res) => {
+app.delete('/api/requests/:id', requireAuth, requireVerified, (req, res) => {
   const idx = data.requests.findIndex((x) => String(x.id) === String(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'Request not found.' });
   if (data.requests[idx].buyerEmail && data.requests[idx].buyerEmail !== req.userEmail) {
@@ -405,7 +419,7 @@ app.get('/api/opportunities', requireAuth, (req, res) => {
   res.json(visible.map(withAwarded));
 });
 
-app.post('/api/opportunities', requireAuth, (req, res) => {
+app.post('/api/opportunities', requireAuth, requireVerified, (req, res) => {
   const b = req.body || {};
   const opp = {
     ...b, // client-supplied listing/request details + coords
@@ -420,7 +434,7 @@ app.post('/api/opportunities', requireAuth, (req, res) => {
   res.json(opp);
 });
 
-app.patch('/api/opportunities/:id', requireAuth, (req, res) => {
+app.patch('/api/opportunities/:id', requireAuth, requireVerified, (req, res) => {
   const o = data.opportunities.find((x) => String(x.id) === String(req.params.id));
   if (!o) return res.status(404).json({ error: 'Opportunity not found.' });
   if (o.sellerEmail && o.sellerEmail !== req.userEmail) {
@@ -432,7 +446,7 @@ app.patch('/api/opportunities/:id', requireAuth, (req, res) => {
 });
 
 // Atomic award: mark the opp awarded + winning bid awarded + others rejected.
-app.post('/api/opportunities/:id/award', requireAuth, (req, res) => {
+app.post('/api/opportunities/:id/award', requireAuth, requireVerified, (req, res) => {
   const o = data.opportunities.find((x) => String(x.id) === String(req.params.id));
   if (!o) return res.status(404).json({ error: 'Opportunity not found.' });
   if (o.sellerEmail && o.sellerEmail !== req.userEmail) {
@@ -466,7 +480,7 @@ app.post('/api/opportunities/:id/award', requireAuth, (req, res) => {
 
 // Mark an awarded haul as delivered/completed. Allowed for the seller who owns
 // the opportunity or the awarded hauler.
-app.post('/api/opportunities/:id/complete', requireAuth, (req, res) => {
+app.post('/api/opportunities/:id/complete', requireAuth, requireVerified, (req, res) => {
   const o = data.opportunities.find((x) => String(x.id) === String(req.params.id));
   if (!o) return res.status(404).json({ error: 'Opportunity not found.' });
   if (o.status !== 'awarded') {
@@ -505,7 +519,7 @@ app.get('/api/bids', requireAuth, (req, res) => {
   res.json(visible.map(withHauler));
 });
 
-app.post('/api/bids', requireAuth, (req, res) => {
+app.post('/api/bids', requireAuth, requireVerified, (req, res) => {
   const b = req.body || {};
   const bid = {
     id: newId('bid'),
@@ -533,7 +547,7 @@ app.post('/api/bids', requireAuth, (req, res) => {
   }
 });
 
-app.delete('/api/opportunities/:id', requireAuth, (req, res) => {
+app.delete('/api/opportunities/:id', requireAuth, requireVerified, (req, res) => {
   const idx = data.opportunities.findIndex((x) => String(x.id) === String(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'Opportunity not found.' });
   if (data.opportunities[idx].sellerEmail && data.opportunities[idx].sellerEmail !== req.userEmail) {
@@ -544,7 +558,7 @@ app.delete('/api/opportunities/:id', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-app.delete('/api/bids/:id', requireAuth, (req, res) => {
+app.delete('/api/bids/:id', requireAuth, requireVerified, (req, res) => {
   const idx = data.bids.findIndex((x) => String(x.id) === String(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'Bid not found.' });
   if (data.bids[idx].haulerEmail && data.bids[idx].haulerEmail !== req.userEmail) {
@@ -631,7 +645,7 @@ app.get('/api/threads', requireAuth, (req, res) => {
   res.json(threads);
 });
 
-app.post('/api/messages', requireAuth, (req, res) => {
+app.post('/api/messages', requireAuth, requireVerified, (req, res) => {
   const b = req.body || {};
   const role = threadRole(b.threadId, req.userEmail);
   if (!role) {
@@ -672,7 +686,7 @@ app.post('/api/messages', requireAuth, (req, res) => {
  * Reviews
  * ------------------------------------------------------------------ */
 
-app.post('/api/reviews', requireAuth, (req, res) => {
+app.post('/api/reviews', requireAuth, requireVerified, (req, res) => {
   const { toEmail, rating, comment, oppId } = req.body || {};
   const r = Number(rating);
   if (!toEmail || !data.accounts[toEmail]) {
