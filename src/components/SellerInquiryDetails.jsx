@@ -313,6 +313,15 @@ export default function SellerInquiryDetails() {
                             <strong>Hauler:</strong>{" "}
                             {b.haulerName || b.haulerEmail || "Hauler"}
                             {b.haulerCompany ? ` (${b.haulerCompany})` : ""}
+                            {b.haulerRatingCount > 0 ? (
+                              <span style={{ marginLeft: 6, color: "#facc15" }}>
+                                ★ {b.haulerRating} ({b.haulerRatingCount})
+                              </span>
+                            ) : (
+                              <span style={{ marginLeft: 6, opacity: 0.5, fontSize: 12 }}>
+                                no ratings yet
+                              </span>
+                            )}
                           </div>
                           <div>
                             <strong>Notes:</strong> {b.notes || "—"}

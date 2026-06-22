@@ -80,27 +80,38 @@ export default function BuyerRequestDetails() {
   );
   const sellerName = listing?.sellerCompany || listing?.sellerName || "the seller";
   const sellerEmail = listing?.sellerEmail;
+  const haulerEmail = opp?.awardedHaulerEmail;
+  const haulerName = opp?.awardedHaulerName || "the hauler";
   const completed = opp?.status === "completed";
 
   const [rating, setRating] = useState(0);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewSaved, setReviewSaved] = useState(false);
 
-  // Load any review I've already left for this completed order.
+  const [hRating, setHRating] = useState(0);
+  const [hComment, setHComment] = useState("");
+  const [hSaved, setHSaved] = useState(false);
+
+  // Load any reviews I've already left for this completed order.
   useEffect(() => {
     let active = true;
-    if (completed && sellerEmail && opp?.id) {
+    if (completed && opp?.id) {
       api
         .get(`/reviews/mine?oppId=${encodeURIComponent(opp.id)}`)
         .then((revs) => {
           if (!active) return;
-          const mine = (Array.isArray(revs) ? revs : []).find(
-            (r) => r.toEmail === sellerEmail
-          );
-          if (mine) {
-            setRating(mine.rating);
-            setReviewComment(mine.comment || "");
+          const list = Array.isArray(revs) ? revs : [];
+          const forSeller = list.find((r) => r.toEmail === sellerEmail);
+          if (forSeller) {
+            setRating(forSeller.rating);
+            setReviewComment(forSeller.comment || "");
             setReviewSaved(true);
+          }
+          const forHauler = list.find((r) => r.toEmail === haulerEmail);
+          if (forHauler) {
+            setHRating(forHauler.rating);
+            setHComment(forHauler.comment || "");
+            setHSaved(true);
           }
         })
         .catch(() => {});
@@ -108,7 +119,7 @@ export default function BuyerRequestDetails() {
     return () => {
       active = false;
     };
-  }, [completed, sellerEmail, opp?.id]);
+  }, [completed, sellerEmail, haulerEmail, opp?.id]);
 
   const submitReview = async () => {
     if (!rating || !sellerEmail || !opp?.id) return;
@@ -122,6 +133,21 @@ export default function BuyerRequestDetails() {
       setReviewSaved(true);
     } catch (e) {
       console.error("review failed", e.message);
+    }
+  };
+
+  const submitHaulerReview = async () => {
+    if (!hRating || !haulerEmail || !opp?.id) return;
+    try {
+      await api.post("/reviews", {
+        toEmail: haulerEmail,
+        rating: hRating,
+        comment: hComment,
+        oppId: opp.id,
+      });
+      setHSaved(true);
+    } catch (e) {
+      console.error("hauler review failed", e.message);
     }
   };
 
@@ -251,6 +277,37 @@ export default function BuyerRequestDetails() {
                 {reviewSaved ? "Update rating" : "Submit rating"}
               </button>
               {reviewSaved ? (
+                <span style={{ color: "#4ade80", fontSize: 13 }}>
+                  Thanks for rating!
+                </span>
+              ) : null}
+            </div>
+          </GlassCard>
+        ) : null}
+
+        {completed && haulerEmail ? (
+          <GlassCard className="dashboard-card" style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
+              Rate the hauler ({haulerName})
+            </div>
+            <StarRating value={hRating} onChange={setHRating} size={26} />
+            <textarea
+              className="field-input"
+              style={{ marginTop: 10, width: "100%" }}
+              rows={2}
+              placeholder="Optional comment"
+              value={hComment}
+              onChange={(e) => setHComment(e.target.value)}
+            />
+            <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10 }}>
+              <button
+                className="primary-button"
+                onClick={submitHaulerReview}
+                disabled={!hRating}
+              >
+                {hSaved ? "Update rating" : "Submit rating"}
+              </button>
+              {hSaved ? (
                 <span style={{ color: "#4ade80", fontSize: 13 }}>
                   Thanks for rating!
                 </span>

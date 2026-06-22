@@ -84,7 +84,14 @@ function withBuyer(r) {
 }
 function withHauler(b) {
   const a = data.accounts[b.haulerEmail];
-  return { ...b, haulerName: a?.name || "", haulerCompany: a?.company || "" };
+  const r = ratingFor(b.haulerEmail);
+  return {
+    ...b,
+    haulerName: a?.name || "",
+    haulerCompany: a?.company || "",
+    haulerRating: r.avg,
+    haulerRatingCount: r.count,
+  };
 }
 // Attach the winning hauler + bid summary to an awarded opportunity so buyers
 // and sellers can see who's assigned without reading the bids list.
@@ -97,6 +104,7 @@ function withAwarded(o) {
     ...o,
     awardedHaulerName: a?.name || "",
     awardedHaulerCompany: a?.company || "",
+    awardedHaulerEmail: bid.haulerEmail || "",
     awardedAmount: bid.amount,
     awardedAvailability: bid.availability || "",
   };
