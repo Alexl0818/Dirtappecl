@@ -1,5 +1,14 @@
 # Session Changelog — Hardening & Geo Map
 
+## ⭐ Hauler ratings (latest)
+
+Buyers now rate the **hauler** after delivery too (not just the seller). Each
+bidder's rating shows next to their bid in the seller's award view ("★ avg" or
+"no ratings yet"), so awarding can weigh reliability, not just price. Reuses the
+reviews store. Trust now covers all three parties (seller, hauler). Verified live.
+
+
+
 ## 📧 Email notifications + account verification (latest)
 
 - **Transactional emails** on every key event (new request → seller,
