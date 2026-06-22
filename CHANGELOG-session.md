@@ -1,6 +1,17 @@
 # Session Changelog — Hardening & Geo Map
 
-## 💳 Subscription/billing engine (latest)
+## 🧭 Removed role selection (latest)
+
+Buyers/sellers/haulers are no longer separate roles. There's no "choose your role"
+screen at login and no role picker in Profile — every signed-in user reaches all
+flows (Buy / Sell / Haul) through the bottom nav. The only future gate is the
+**hauler subscription** to submit bids once billing turns on (already enforced
+server-side). Removed the `/mode` route + ModeSelectScreen, the Profile Roles card,
+the dashboards' "Switch Mode" controls, and `roles` from signup + profile PATCH.
+Login/Signup/Verify now land on `/buyer/home`. Verified live: login goes straight
+into the app, Profile shows only Account + Contact, console clean.
+
+## 💳 Subscription/billing engine
 
 Wired the monetization model into the backend: **free for all until a user
 threshold, then role-based plans** — end users get 1 free post/month then need a
