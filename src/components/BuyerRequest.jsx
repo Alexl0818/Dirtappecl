@@ -6,6 +6,7 @@ import BottomNav from "./BottomNav";
 import { useInquiry } from "./InquiryContext";
 import { useSellerListings } from "./SellerListingContext";
 import { geocodeAddress } from "../lib/maps";
+import AddressField from "./AddressField";
 
 export default function BuyerRequest() {
   const navigate = useNavigate();
@@ -56,6 +57,7 @@ export default function BuyerRequest() {
   }
 
   const [saving, setSaving] = useState(false);
+  const [geo, setGeo] = useState(null); // resolved delivery address
 
   async function onContinue() {
     setError("");
@@ -65,6 +67,17 @@ export default function BuyerRequest() {
       return setError("Please enter a valid quantity.");
     if (!form.address.trim()) return setError("Please enter a delivery address.");
 
+    setSaving(true);
+    // Require a real, geocodable delivery address.
+    let resolved = geo;
+    if (!resolved) resolved = await geocodeAddress(form.address);
+    if (!resolved) {
+      setSaving(false);
+      return setError(
+        "We couldn't find that delivery address. Please enter a valid address (city/state or ZIP)."
+      );
+    }
+
     // The server assigns id/createdAt/status/buyerEmail.
     const request = {
       material: form.material,
@@ -73,16 +86,10 @@ export default function BuyerRequest() {
       address: form.address.trim(),
       notes: form.notes.trim(),
       listingId: listingId || null,
+      lat: resolved.lat,
+      lng: resolved.lng,
+      geoFormatted: resolved.formatted,
     };
-
-    // Best-effort geocode so the request location can show on the map.
-    setSaving(true);
-    const geo = await geocodeAddress(request.address);
-    if (geo) {
-      request.lat = geo.lat;
-      request.lng = geo.lng;
-      request.geoFormatted = geo.formatted;
-    }
 
     try {
       await inquiry.addRequest(request);
@@ -177,15 +184,13 @@ export default function BuyerRequest() {
               </select>
             </div>
 
-            <div className="form-field">
-              <div className="field-label">Delivery Address</div>
-              <input
-                className="field-input"
-                value={form.address}
-                onChange={(e) => setField("address", e.target.value)}
-                placeholder="Jobsite address"
-              />
-            </div>
+            <AddressField
+              label="Delivery Address"
+              placeholder="Jobsite address (city/state or ZIP)"
+              value={form.address}
+              onChange={(v) => setField("address", v)}
+              onResolved={setGeo}
+            />
 
             <div className="form-field">
               <div className="field-label">Notes</div>

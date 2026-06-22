@@ -4,6 +4,7 @@ import GlassCard from "./GlassCard";
 import BottomNav from "./BottomNav";
 import { useSellerListings } from "./SellerListingContext";
 import { geocodeAddress } from "../lib/maps";
+import AddressField from "./AddressField";
 
 export default function NewListing() {
   const navigate = useNavigate();
@@ -47,6 +48,7 @@ export default function NewListing() {
   }
 
   const [saving, setSaving] = useState(false);
+  const [geo, setGeo] = useState(null); // resolved location from AddressField
 
   async function onPublish() {
     setError("");
@@ -56,6 +58,17 @@ export default function NewListing() {
       return setError("Please enter a valid quantity.");
     if (!form.location.trim()) return setError("Please enter a location.");
 
+    setSaving(true);
+    // Require a real, geocodable location so the listing always maps correctly.
+    let resolved = geo;
+    if (!resolved) resolved = await geocodeAddress(form.location);
+    if (!resolved) {
+      setSaving(false);
+      return setError(
+        "We couldn't find that location on the map. Please enter a valid address (city/state or ZIP)."
+      );
+    }
+
     const fields = {
       material: form.material,
       quantity: Number(form.quantity),
@@ -63,16 +76,10 @@ export default function NewListing() {
       location: form.location.trim(),
       price: form.price.trim(),
       notes: form.notes.trim(),
+      lat: resolved.lat,
+      lng: resolved.lng,
+      geoFormatted: resolved.formatted,
     };
-
-    setSaving(true);
-    // Best-effort geocode so the listing shows on the map.
-    const geo = await geocodeAddress(fields.location);
-    if (geo) {
-      fields.lat = geo.lat;
-      fields.lng = geo.lng;
-      fields.geoFormatted = geo.formatted;
-    }
 
     try {
       if (isEdit) {
@@ -160,15 +167,13 @@ export default function NewListing() {
               </select>
             </div>
 
-            <div className="form-field">
-              <div className="field-label">Location</div>
-              <input
-                className="field-input"
-                value={form.location}
-                onChange={(e) => setField("location", e.target.value)}
-                placeholder="City / Jobsite / Zip"
-              />
-            </div>
+            <AddressField
+              label="Location"
+              placeholder="City / Jobsite / Zip"
+              value={form.location}
+              onChange={(v) => setField("location", v)}
+              onResolved={setGeo}
+            />
 
             <div className="form-field">
               <div className="field-label">Price (optional)</div>
