@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 
 import { AuthProvider, useAuth } from "./components/AuthContext";
@@ -31,6 +31,7 @@ import HaulerHaulOpportunity from "./components/HaulerHaulOpportunity";
 import ProfileScreen from "./components/ProfileScreen";
 import MessageThread from "./components/MessageThread";
 import MessagesInbox from "./components/MessagesInbox";
+import VerifyEmail from "./components/VerifyEmail";
 
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -45,13 +46,55 @@ function RequireAuth() {
   return <Outlet />;
 }
 
+// A slim banner prompting unverified users to confirm their email.
+function VerifyBanner() {
+  const { user, ready, resendVerification } = useAuth();
+  const [sent, setSent] = useState(false);
+  if (!ready || !user || user.verified) return null;
+  return (
+    <div
+      style={{
+        background: "rgba(124,45,18,0.95)",
+        color: "#fed7aa",
+        padding: "8px 14px",
+        textAlign: "center",
+        fontSize: 13,
+        display: "flex",
+        gap: 10,
+        justifyContent: "center",
+        alignItems: "center",
+        flexWrap: "wrap",
+      }}
+    >
+      <span>Verify your email to get the verified badge.</span>
+      {sent ? (
+        <span style={{ color: "#fef3c7" }}>Sent — check your inbox.</span>
+      ) : (
+        <button
+          className="ghost-button"
+          style={{ borderColor: "#fed7aa", color: "#fed7aa" }}
+          onClick={async () => {
+            await resendVerification();
+            setSent(true);
+          }}
+        >
+          Resend email
+        </button>
+      )}
+    </div>
+  );
+}
+
 function AppInner() {
   return (
-    <Routes>
+    <>
+      <VerifyBanner />
+      <Routes>
       {/* Public */}
       <Route path="/" element={<WelcomeScreen />} />
       <Route path="/login" element={<LoginScreen />} />
       <Route path="/signup" element={<SignupScreen />} />
+      <Route path="/verify" element={<VerifyEmail />} />
 
       {/* Everything below requires a signed-in user */}
       <Route element={<RequireAuth />}>
@@ -157,6 +200,7 @@ function AppInner() {
       {/* Catch-all: send unknown URLs back to the welcome screen */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }
 

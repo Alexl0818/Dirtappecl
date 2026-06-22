@@ -2,6 +2,7 @@ import express from 'express';
 import crypto from 'crypto';
 import OpenAI from 'openai';
 import { data, save } from './db.js';
+import { sendMail, APP_URL } from './email.js';
 
 const app = express();
 app.use(express.json());
@@ -51,10 +52,10 @@ function verifyPassword(password, stored) {
   return stored === password;
 }
 
-// Strip the password before sending an account to the client.
+// Strip secrets before sending an account to the client.
 function publicUser(account) {
   if (!account) return null;
-  const { password, ...rest } = account;
+  const { password, verifyToken, ...rest } = account;
   return rest;
 }
 
@@ -131,6 +132,7 @@ app.post('/api/auth/signup', (req, res) => {
   if (!password || password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters.' });
   if (data.accounts[cleanEmail]) return res.status(409).json({ error: 'An account with that email already exists.' });
 
+  const verifyToken = crypto.randomBytes(24).toString('hex');
   const account = {
     name: name.trim(),
     email: cleanEmail,
@@ -139,6 +141,8 @@ app.post('/api/auth/signup', (req, res) => {
     phone: '',
     region: '',
     roles: { buyer: true, seller: false, hauler: false },
+    verified: false,
+    verifyToken,
     createdAt: new Date().toISOString(),
   };
   data.accounts[cleanEmail] = account;
@@ -146,6 +150,42 @@ app.post('/api/auth/signup', (req, res) => {
   data.sessions[token] = cleanEmail;
   save();
   res.json({ user: publicUser(account), token });
+
+  sendVerificationEmail(account);
+});
+
+// Sends (or re-sends) the email-verification link for an account.
+function sendVerificationEmail(account) {
+  if (!account || account.verified || !account.verifyToken) return;
+  sendMail({
+    to: account.email,
+    subject: "Verify your SoilConnect email",
+    text: `Welcome to SoilConnect, ${account.name}!\n\nConfirm your email to get the verified badge:\n${APP_URL}/verify?token=${account.verifyToken}`,
+  });
+}
+
+// Confirm an email via the link's token (no auth — the token authenticates).
+app.get('/api/auth/verify', (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.status(400).json({ error: 'Missing token.' });
+  const account = Object.values(data.accounts).find((a) => a.verifyToken === token);
+  if (!account) {
+    return res.status(400).json({ error: 'Invalid or already-used verification link.' });
+  }
+  account.verified = true;
+  delete account.verifyToken;
+  save();
+  res.json({ ok: true, email: account.email });
+});
+
+// Re-send the verification email to the signed-in user.
+app.post('/api/auth/resend-verification', requireAuth, (req, res) => {
+  const account = data.accounts[req.userEmail];
+  if (account.verified) return res.json({ ok: true, alreadyVerified: true });
+  if (!account.verifyToken) account.verifyToken = crypto.randomBytes(24).toString('hex');
+  save();
+  sendVerificationEmail(account);
+  res.json({ ok: true });
 });
 
 app.post('/api/auth/login', (req, res) => {
@@ -292,6 +332,17 @@ app.post('/api/requests', requireAuth, (req, res) => {
   data.requests.unshift(request);
   save();
   res.json(request);
+
+  // Notify the listing's seller.
+  const listing = data.listings.find((l) => String(l.id) === String(request.listingId));
+  if (listing?.sellerEmail) {
+    const buyer = data.accounts[req.userEmail];
+    sendMail({
+      to: listing.sellerEmail,
+      subject: "New request on your listing",
+      text: `${buyer?.name || "A buyer"} requested ${request.quantity} ${request.unit} of ${request.material} (deliver to ${request.address || "—"}).\n\nReview it: ${APP_URL}/seller/listing`,
+    });
+  }
 });
 
 app.patch('/api/requests/:id', requireAuth, (req, res) => {
@@ -304,9 +355,19 @@ app.patch('/api/requests/:id', requireAuth, (req, res) => {
   if (r.buyerEmail !== req.userEmail && !ownsListing) {
     return res.status(403).json({ error: 'Not allowed to update this request.' });
   }
+  const prevStatus = r.status;
   Object.assign(r, pick(req.body, ["status", "notes"]));
   save();
   res.json(r);
+
+  // Notify the buyer when the seller accepts/declines.
+  if (r.status !== prevStatus && (r.status === "accepted" || r.status === "declined")) {
+    sendMail({
+      to: r.buyerEmail,
+      subject: `Your request was ${r.status}`,
+      text: `Your request for ${r.quantity} ${r.unit} of ${r.material} was ${r.status} by the seller.\n\nView it: ${APP_URL}/buyer/requests`,
+    });
+  }
 });
 
 app.delete('/api/requests/:id', requireAuth, (req, res) => {
@@ -392,6 +453,15 @@ app.post('/api/opportunities/:id/award', requireAuth, (req, res) => {
   });
   save();
   res.json({ opportunity: o, bids: data.bids.filter((b) => String(b.oppId) === String(o.id)) });
+
+  // Notify the winning hauler.
+  if (winning.haulerEmail) {
+    sendMail({
+      to: winning.haulerEmail,
+      subject: "Your bid was awarded 🎉",
+      text: `You won the haul for ${o.material} (${o.pickupLocation || o.pickup || "pickup"} → ${o.dropoffAddress || o.dropoff || "dropoff"}) at $${winning.amount}.\n\nView it: ${APP_URL}/hauler/dashboard`,
+    });
+  }
 });
 
 // Mark an awarded haul as delivered/completed. Allowed for the seller who owns
@@ -412,6 +482,16 @@ app.post('/api/opportunities/:id/complete', requireAuth, (req, res) => {
   o.completedAt = new Date().toISOString();
   save();
   res.json(o);
+
+  // Notify the buyer their order was delivered.
+  const request = data.requests.find((r) => String(r.id) === String(o.requestId));
+  if (request?.buyerEmail) {
+    sendMail({
+      to: request.buyerEmail,
+      subject: "Your order was delivered",
+      text: `Your ${o.material} order has been marked delivered. Thanks for using SoilConnect!\n\nLeave a rating: ${APP_URL}/buyer/requests`,
+    });
+  }
 });
 
 // Visible: your own bids (as hauler) + bids on your opportunities (as seller).
@@ -440,6 +520,17 @@ app.post('/api/bids', requireAuth, (req, res) => {
   data.bids.unshift(bid);
   save();
   res.json(bid);
+
+  // Notify the opportunity's seller of a new bid.
+  const opp = data.opportunities.find((o) => String(o.id) === String(bid.oppId));
+  if (opp?.sellerEmail) {
+    const hauler = data.accounts[req.userEmail];
+    sendMail({
+      to: opp.sellerEmail,
+      subject: "New bid on your haul",
+      text: `${hauler?.name || "A hauler"} bid $${bid.amount} on the haul for ${opp.material}.\n\nReview bids: ${APP_URL}/seller/listing`,
+    });
+  }
 });
 
 app.delete('/api/opportunities/:id', requireAuth, (req, res) => {
@@ -560,6 +651,21 @@ app.post('/api/messages', requireAuth, (req, res) => {
   data.messages.push(msg);
   save();
   res.json(msg);
+
+  // Notify the other thread participant.
+  const request = data.requests.find((r) => String(r.id) === String(msg.threadId));
+  if (request) {
+    const listing = data.listings.find((l) => String(l.id) === String(request.listingId));
+    const otherEmail = role === "buyer" ? listing?.sellerEmail : request.buyerEmail;
+    if (otherEmail) {
+      const sender = data.accounts[req.userEmail];
+      sendMail({
+        to: otherEmail,
+        subject: `New message from ${sender?.name || "a SoilConnect user"}`,
+        text: `${msg.text}\n\nReply: ${APP_URL}/messages`,
+      });
+    }
+  }
 });
 
 /* ------------------------------------------------------------------ *

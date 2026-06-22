@@ -85,6 +85,25 @@ export function AuthProvider({ children }) {
     }
   }
 
+  async function resendVerification() {
+    try {
+      await api.post("/auth/resend-verification");
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  }
+
+  // Re-pull the current user (e.g. after email verification).
+  async function refreshUser() {
+    try {
+      const { user: me } = await api.get("/auth/me");
+      setUser(me);
+    } catch {
+      /* ignore */
+    }
+  }
+
   const value = useMemo(
     () => ({
       user,
@@ -94,6 +113,8 @@ export function AuthProvider({ children }) {
       login,
       logout,
       updateProfile,
+      resendVerification,
+      refreshUser,
     }),
     [user, ready]
   );
