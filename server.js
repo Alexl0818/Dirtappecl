@@ -813,11 +813,14 @@ app.get('/api/reviews/mine', requireAuth, (req, res) => {
  * ------------------------------------------------------------------ */
 
 app.get('/api/billing/status', requireAuth, (req, res) => {
+  // During the free period, don't reveal that paid plans are coming — return
+  // only the flag (the UI hides all billing then).
+  if (!billingActive()) {
+    return res.json({ billingActive: false });
+  }
   const account = data.accounts[req.userEmail];
   res.json({
-    billingActive: billingActive(),
-    userCount: accountCount(),
-    threshold: BILLING.threshold,
+    billingActive: true,
     freePostsPerMonth: BILLING.freePostsPerMonth,
     postsThisMonth: postsThisMonth(req.userEmail),
     subscription: account.subscription || { status: 'none', plan: null, currentPeriodEnd: null },

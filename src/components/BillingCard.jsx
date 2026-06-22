@@ -39,7 +39,8 @@ export default function BillingCard() {
     }
   };
 
-  if (!status) return null;
+  // Nothing about billing is shown during the free period.
+  if (!status || !status.billingActive) return null;
 
   const sub = status.subscription || {};
   const active = sub.status === "active";
@@ -50,12 +51,7 @@ export default function BillingCard() {
         Plan &amp; billing
       </h2>
 
-      {!status.billingActive ? (
-        <div className="card-description">
-          🎉 Free period — {status.userCount}/{status.threshold} users. Everything
-          is free right now; no subscription needed.
-        </div>
-      ) : active ? (
+      {active ? (
         <div className="card-description">
           ✓ Active plan:{" "}
           <strong>{sub.plan === "hauler" ? "Hauler" : "Poster"}</strong>
