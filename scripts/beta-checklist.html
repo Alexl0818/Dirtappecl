@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SoilConnect — Beta Launch Checklist</title>
+<style>
+  @page { size: Letter; margin: 0.8in 0.85in; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Arial, Helvetica, sans-serif; color: #1a1a1a; font-size: 12.5px; line-height: 1.5; margin: 0; }
+  h1.title { color: #2E7D32; font-size: 26px; margin: 0 0 2px; }
+  .sub { color: #555; font-size: 13px; margin: 0 0 2px; }
+  .stamp { color: #888; font-style: italic; font-size: 11px; margin: 0 0 16px; }
+  h2 { color: #2E7D32; font-size: 15px; border-bottom: 2px solid #d8e8d8; padding-bottom: 3px; margin: 20px 0 8px; }
+  .legend { background: #f4f8f4; border: 1px solid #dceadc; border-radius: 6px; padding: 6px 10px; font-size: 12px; margin-bottom: 14px; }
+  ul.checks { list-style: none; padding: 0; margin: 0 0 4px; }
+  ul.checks li { padding: 3px 0 3px 26px; position: relative; }
+  ul.checks li::before { content: "☐"; position: absolute; left: 0; font-size: 15px; line-height: 1.2; color: #444; }
+  li.done::before { content: "☑"; color: #2E7D32; }
+  li.wip::before  { content: "◐"; color: #b8860b; }
+  .muted { color: #777; font-style: italic; }
+  .ready { background: #f4f8f4; border-left: 4px solid #2E7D32; padding: 8px 12px; margin-top: 14px; border-radius: 0 6px 6px 0; }
+  .ready h3 { margin: 0 0 4px; font-size: 13px; }
+  b { font-weight: 600; }
+</style>
+</head>
+<body>
+  <h1 class="title">Beta Launch Checklist</h1>
+  <p class="sub">Print this and check items off as we go.</p>
+  <p class="stamp">Updated 2026-06-26 · SoilConnect</p>
+
+  <div class="legend"><b>Legend:</b>&nbsp; ☐ = not started&nbsp;&nbsp;&nbsp; ◐ = in progress&nbsp;&nbsp;&nbsp; ☑ = done</div>
+
+  <h2>Phase 0 — Code hardening (no accounts needed)</h2>
+  <ul class="checks">
+    <li class="done"><b>Email verification non-blocking for beta</b> — env toggle so testers aren’t locked out before SMTP</li>
+    <li class="done"><b>Password reset</b> — forgot password → email link → set new password</li>
+    <li class="done"><b>Rate limiting</b> on public API (signup/login/post abuse protection)</li>
+    <li class="done"><b>Lock down CORS</b> to the real frontend domain (env allowlist)</li>
+    <li class="wip"><b>Server-side input validation</b> pass on all write endpoints <span class="muted">(body-cap + core done; full sweep pending)</span></li>
+    <li class="done"><b>.env.example</b> documenting every config value</li>
+    <li><b>Friendly 404 / error pages</b> + consistent API error shape</li>
+    <li><b>Data backup</b> strategy (even a daily file copy for now)</li>
+  </ul>
+
+  <h2>Phase 1 — Production data layer</h2>
+  <ul class="checks">
+    <li><b>Decision:</b> keep JSON file (tiny closed beta only) OR move to Postgres</li>
+    <li>If Postgres: schema + migration from current JSON</li>
+    <li>Seed/admin script for test accounts</li>
+    <li>Automated backup (snapshot/dump on a schedule)</li>
+  </ul>
+
+  <h2>Phase 2 — Deployment (get a shareable URL)</h2>
+  <ul class="checks">
+    <li>Pick hosts (Render/Railway/Fly for API, Vercel/Netlify for UI)</li>
+    <li><b>Backend</b> deploy config (Dockerfile / Procfile / render.yaml)</li>
+    <li><b>Frontend</b> build + deploy, pointed at production API URL</li>
+    <li>Production environment variables set on hosts</li>
+    <li>HTTPS + custom domain (optional but recommended)</li>
+    <li>Smoke-test the full loop on the live URL</li>
+  </ul>
+
+  <h2>Phase 3 — Integrations (need your credentials)</h2>
+  <ul class="checks">
+    <li><b>Real SMTP</b> (verification, resets, notifications)</li>
+    <li>Geocoder: keep free Nominatim for beta OR add paid key</li>
+    <li><b>Stripe</b> — NOT needed for free beta; defer to paid phase</li>
+  </ul>
+
+  <h2>Phase 4 — Observability &amp; safety</h2>
+  <ul class="checks">
+    <li><b>Error monitoring</b> (e.g. Sentry) for crashes testers hit</li>
+    <li>Structured request/error logging on the server</li>
+    <li>Basic uptime check / health ping</li>
+    <li>(Optional) lightweight analytics: signups, posts, bids</li>
+  </ul>
+
+  <h2>Phase 5 — Beta operations &amp; legal</h2>
+  <ul class="checks">
+    <li><b>Closed-beta gating</b> (invite code or allowlist)</li>
+    <li><b>Feedback channel</b> (in-app link, form, or email)</li>
+    <li><b>Privacy Policy + Terms of Service</b> (required to collect emails)</li>
+    <li>Short “Welcome to the beta” guide for testers</li>
+    <li>Final pre-launch smoke test + go/no-go</li>
+  </ul>
+
+  <div class="ready">
+    <h3>Definition of “ready for closed beta”</h3>
+    All of <b>Phase 0</b>, <b>Phase 2</b>, the <b>SMTP</b> item in Phase 3, plus <b>Phase 5</b> gating + feedback + privacy/terms.
+    Phase 1 (Postgres) and Phase 4 (monitoring) can trail slightly for a small invite-only group, but should land before opening it wider.
+  </div>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SoilConnect — Beta Launch Roadmap</title>
+<style>
+  @page { size: Letter; margin: 0.8in 0.85in; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Arial, Helvetica, sans-serif; color: #1a1a1a; font-size: 12.5px; line-height: 1.5; margin: 0; }
+  h1.title { color: #2E7D32; font-size: 26px; margin: 0 0 2px; }
+  .sub { color: #555; font-size: 13px; margin: 0 0 2px; }
+  .stamp { color: #888; font-style: italic; font-size: 11px; margin: 0 0 16px; }
+  h2 { color: #2E7D32; font-size: 15px; margin: 18px 0 8px; }
+  h3 { font-size: 13.5px; margin: 18px 0 4px; border-bottom: 2px solid #d8e8d8; padding-bottom: 3px; }
+  h3 .meta { display:block; font-weight: normal; color: #777; font-style: italic; font-size: 11.5px; margin-top: 2px; }
+  .diagram { background: #0f1c12; color: #b7e2bf; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 11px; line-height: 1.45; padding: 12px 14px; border-radius: 8px; white-space: pre; overflow-x: auto; }
+  .note { color: #777; font-style: italic; margin: 8px 0 4px; }
+  ul { margin: 4px 0 8px; padding-left: 20px; }
+  li { padding: 2px 0; }
+  ol { margin: 6px 0; padding-left: 22px; }
+  ol li { padding: 3px 0; }
+  .status-done { display:inline-block; background:#2E7D32; color:#fff; font-size:10px; font-weight:600; padding:1px 7px; border-radius:10px; vertical-align: middle; margin-left:6px; }
+  b { font-weight: 600; }
+  .muted { color:#777; font-style: italic; }
+</style>
+</head>
+<body>
+  <h1 class="title">Beta Launch Roadmap</h1>
+  <p class="sub">The sequenced plan behind the checklist.</p>
+  <p class="stamp">Updated 2026-06-26 · SoilConnect</p>
+
+  <h2>The path to a live URL (critical path)</h2>
+  <div class="diagram">PHASE 0 (harden) ─► PHASE 2 (deploy) ─► SMTP (Phase 3) ─► PHASE 5 (gate+legal) ─► LIVE BETA
+      │                                                        ▲
+      └────────► PHASE 1 (Postgres) ───────────────────────────┘
+                 (can land just after launch for a tiny closed beta)</div>
+  <p class="note">Phase 4 (monitoring) runs in parallel — wire it once a host exists.</p>
+
+  <h3>Phase 0 — Code hardening <span class="status-done">DONE</span><span class="meta">~1 session · mostly Claude · Goal: the code is safe to expose to strangers.</span></h3>
+  <ul>
+    <li><b>Verification toggle</b> — auto-verify new users when no SMTP, so testers aren’t locked out.</li>
+    <li><b>Password reset</b> — forgot → token link → reset; returns link in no-SMTP beta.</li>
+    <li><b>Rate limiting</b> — per-IP limiter on auth + posts.</li>
+    <li><b>CORS lock</b> — allowed origin from env; body-size cap.</li>
+    <li><b>.env.example</b> — every knob documented; server auto-loads .env.</li>
+  </ul>
+
+  <h3>Phase 1 — Production data layer<span class="meta">~1 session · You decide, then Claude · Goal: data survives concurrent users and restarts.</span></h3>
+  <ul>
+    <li><b>Decision point:</b> JSON file is fine for a 5–10 person invite beta. Beyond that, Postgres.</li>
+    <li>If Postgres: schema + one-time migration from data.json; same API, nothing else changes.</li>
+    <li>Either way: a scheduled backup (file copy or pg_dump).</li>
+    <li class="muted">Recommendation: ship the closed beta on JSON to move fast; do the Postgres swap in parallel; cut over before widening.</li>
+  </ul>
+
+  <h3>Phase 2 — Deployment<span class="meta">~1 session · Claude builds config, You click deploy · Goal: a URL you can text to a tester.</span></h3>
+  <ul>
+    <li>Deploy config (Dockerfile + render.yaml/Procfile) and a prod build pointing the frontend at the live API.</li>
+    <li>You create the host accounts and connect the repo (I can’t provision those).</li>
+    <li>We smoke-test the whole loop on the live URL together.</li>
+  </ul>
+
+  <h3>Phase 3 — Integrations<span class="meta">You supply keys, Claude wires · Goal: real email; geocoding that won’t throttle.</span></h3>
+  <ul>
+    <li><b>SMTP (required for launch):</b> any provider (Resend, Postmark, SendGrid, Gmail SMTP). Already coded — drop-in.</li>
+    <li><b>Geocoder (optional):</b> Nominatim is fine for low beta traffic; add a paid key only if testers hit throttling.</li>
+    <li><b>Stripe:</b> skip for now — beta is free; billing stays hidden.</li>
+  </ul>
+
+  <h3>Phase 4 — Observability<span class="meta">~½ session · Claude + You for the Sentry key · Goal: you find out about bugs before testers complain.</span></h3>
+  <ul>
+    <li>Error monitoring (Sentry free tier), server logging, a health/uptime ping.</li>
+  </ul>
+
+  <h3>Phase 5 — Beta ops &amp; legal<span class="meta">~½ session · Claude drafts, You approve · Goal: controlled, lawful, friendly beta.</span></h3>
+  <ul>
+    <li>Invite-code/allowlist gating so signups stay intentional.</li>
+    <li>In-app feedback link.</li>
+    <li>Basic Privacy Policy + Terms (you’re collecting emails — these are needed).</li>
+    <li>A short tester welcome guide.</li>
+  </ul>
+
+  <h2>Suggested order of operations</h2>
+  <ol>
+    <li>Now: Phase 0 items (all code, no waiting on you). <b>— DONE</b></li>
+    <li>Next: Phase 2 deploy config + Phase 5 drafts (legal/welcome) so they’re ready.</li>
+    <li>When you have an SMTP login + host accounts: wire SMTP, deploy, smoke-test → closed beta is live.</li>
+    <li>In parallel / right after: Phase 1 Postgres swap + Phase 4 monitoring before widening.</li>
+  </ol>
+</body>
+</html>
