@@ -1,6 +1,22 @@
 # Session Changelog — Hardening & Geo Map
 
-## 📦 Beta-launch prep — Phase 2 deployment config (latest)
+## 🔌 Configurable API base URL (phone-app ready) (latest)
+
+The frontend no longer hardcodes where the API lives. `src/lib/api.js` reads a
+build-time `VITE_API_URL`:
+- **Unset (default):** uses a relative `/api` path — correct for the
+  single-service web deploy (frontend + API share one address) and dev.
+- **Set:** bakes in an absolute API URL (e.g. `https://soilconnect.onrender.com`)
+  — what a future native phone-app build needs (it can't use a relative path).
+
+Documented in `.env.example`. Verified both builds: default keeps `/api` with no
+host leaked; with `VITE_API_URL` set, the absolute URL is baked into the bundle.
+Re-verified the production server serves the freshly built app end-to-end
+(homepage, client routes, assets, `/api/health`, and a clean 404 on unknown
+`/api`). No product rules touched; third-party integrations remain env-keyed with
+their graceful fallbacks.
+
+## 📦 Beta-launch prep — Phase 2 deployment config
 
 Made the app deployable as a **single service** (one URL, no CORS): in
 production the Express server serves the built React app from `dist/` alongside

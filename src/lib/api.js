@@ -1,6 +1,15 @@
 // Thin client for the Site-Sync backend. Stores the session token in
-// localStorage and attaches it to every request. All calls go through the Vite
-// dev proxy: /api -> the Express server on :3001.
+// localStorage and attaches it to every request.
+//
+// Where the API lives is configurable and NOT hardcoded:
+//   - Default (empty): calls use a relative "/api/..." path. This is correct
+//     when the frontend and API are served from the SAME address — our
+//     single-service web deploy — and also works in dev via the Vite proxy.
+//   - Set VITE_API_URL at build time to point at an absolute API address, e.g.
+//     VITE_API_URL=https://soilconnect.onrender.com
+//     Then requests go to https://soilconnect.onrender.com/api/... This is what
+//     a future native phone app build would use (it can't use a relative path).
+const API_BASE = (import.meta.env?.VITE_API_URL || "").replace(/\/+$/, "");
 
 const TOKEN_KEY = "dirtapp_token";
 
@@ -26,7 +35,7 @@ async function request(method, path, body) {
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`/api${path}`, {
+  const res = await fetch(`${API_BASE}/api${path}`, {
     method,
     headers,
     body: body != null ? JSON.stringify(body) : undefined,
