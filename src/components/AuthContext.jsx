@@ -95,6 +95,27 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // Start a password reset. Always resolves ok (server never reveals whether the
+  // email exists); in no-SMTP mode the server returns a direct reset link.
+  async function forgotPassword(email) {
+    try {
+      const res = await api.post("/auth/forgot-password", { email });
+      return { ok: true, resetUrl: res?.resetUrl };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  }
+
+  // Complete a password reset with the emailed token + a new password.
+  async function resetPassword(token, password) {
+    try {
+      await api.post("/auth/reset-password", { token, password });
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  }
+
   // Re-pull the current user (e.g. after email verification).
   async function refreshUser() {
     try {
@@ -115,6 +136,8 @@ export function AuthProvider({ children }) {
       logout,
       updateProfile,
       resendVerification,
+      forgotPassword,
+      resetPassword,
       refreshUser,
     }),
     [user, ready]

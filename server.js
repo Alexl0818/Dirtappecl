@@ -1,3 +1,4 @@
+import './load-env.js'; // must be first — loads .env before any env-reading module
 import express from 'express';
 import crypto from 'crypto';
 import OpenAI from 'openai';
@@ -5,10 +6,25 @@ import { data, save } from './db.js';
 import { sendMail, APP_URL, EMAIL_TEST_MODE } from './email.js';
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '256kb' })); // cap body size — reject oversized payloads
+
+// Allowed browser origins. In production set CORS_ORIGIN to your frontend URL(s),
+// comma-separated. Left unset (dev), we reflect the request origin so the local
+// Vite dev server works. A literal "*" keeps the old wide-open behavior.
+const CORS_ORIGINS = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  if (CORS_ORIGINS.length === 0) {
+    // Dev: no allowlist configured — reflect the caller's origin.
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  } else if (CORS_ORIGINS.includes('*') || (origin && CORS_ORIGINS.includes(origin))) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    res.setHeader('Vary', 'Origin');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') {
@@ -16,6 +32,42 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+/* ------------------------------------------------------------------ *
+ * Rate limiting (in-memory, per-IP). Lightweight protection against
+ * brute-force and request floods. For multi-instance production this
+ * should move to a shared store (e.g. Redis), but it's solid for a
+ * single-instance beta.
+ * ------------------------------------------------------------------ */
+function rateLimit({ windowMs, max, key = 'default' }) {
+  const hits = new Map(); // ip -> { count, resetAt }
+  return (req, res, next) => {
+    const now = Date.now();
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+    const id = `${key}:${ip}`;
+    let rec = hits.get(id);
+    if (!rec || rec.resetAt < now) {
+      rec = { count: 0, resetAt: now + windowMs };
+      hits.set(id, rec);
+    }
+    rec.count += 1;
+    if (rec.count > max) {
+      const retry = Math.ceil((rec.resetAt - now) / 1000);
+      res.setHeader('Retry-After', String(retry));
+      return res.status(429).json({ error: `Too many requests. Try again in ${retry}s.` });
+    }
+    // Opportunistic cleanup so the map can't grow without bound.
+    if (hits.size > 5000) {
+      for (const [k, v] of hits) if (v.resetAt < now) hits.delete(k);
+    }
+    next();
+  };
+}
+
+// Tight limit on auth endpoints (brute-force / spam-signup defense); looser
+// limit on content creation; a generous catch-all on everything else.
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, key: 'auth' });
+const writeLimiter = rateLimit({ windowMs: 60 * 1000, max: 40, key: 'write' });
 
 /* ------------------------------------------------------------------ *
  * Helpers
@@ -55,7 +107,7 @@ function verifyPassword(password, stored) {
 // Strip secrets before sending an account to the client.
 function publicUser(account) {
   if (!account) return null;
-  const { password, verifyToken, ...rest } = account;
+  const { password, verifyToken, resetToken, resetTokenExp, ...rest } = account;
   return rest;
 }
 
@@ -128,8 +180,18 @@ function requireAuth(req, res, next) {
   next();
 }
 
+// Whether new users must confirm their email before they can act. Defaults to
+// ON only when real SMTP is configured — otherwise (beta/test mode with no mail
+// provider) we auto-verify so testers aren't locked out by an undeliverable
+// link. Force either way with REQUIRE_VERIFICATION=true|false.
+const REQUIRE_VERIFICATION =
+  process.env.REQUIRE_VERIFICATION != null
+    ? process.env.REQUIRE_VERIFICATION === 'true'
+    : !EMAIL_TEST_MODE;
+
 // Gate write actions behind a verified email (use after requireAuth).
 function requireVerified(req, res, next) {
+  if (!REQUIRE_VERIFICATION) return next(); // beta: verification not enforced
   if (!data.accounts[req.userEmail]?.verified) {
     return res.status(403).json({
       error: 'Please verify your email before doing that.',
@@ -209,7 +271,7 @@ function requireHaulerPlan(req, res, next) {
  * Auth + profile
  * ------------------------------------------------------------------ */
 
-app.post('/api/auth/signup', (req, res) => {
+app.post('/api/auth/signup', authLimiter, (req, res) => {
   const { name, email, password, company } = req.body || {};
   const cleanEmail = String(email || '').trim().toLowerCase();
   if (!name || !name.trim()) return res.status(400).json({ error: 'Please enter your name.' });
@@ -225,8 +287,10 @@ app.post('/api/auth/signup', (req, res) => {
     company: (company || '').trim(),
     phone: '',
     region: '',
-    verified: false,
-    verifyToken,
+    // Auto-verify when verification isn't enforced (beta with no SMTP) so the
+    // user can act immediately and isn't stuck on an undeliverable link.
+    verified: !REQUIRE_VERIFICATION,
+    verifyToken: REQUIRE_VERIFICATION ? verifyToken : undefined,
     subscription: { status: 'none', plan: null, currentPeriodEnd: null },
     createdAt: new Date().toISOString(),
   };
@@ -236,7 +300,7 @@ app.post('/api/auth/signup', (req, res) => {
   save();
   res.json({ user: publicUser(account), token });
 
-  sendVerificationEmail(account);
+  if (REQUIRE_VERIFICATION) sendVerificationEmail(account);
 });
 
 // Sends (or re-sends) the email-verification link for an account.
@@ -276,7 +340,55 @@ app.post('/api/auth/resend-verification', requireAuth, (req, res) => {
   res.json(resp);
 });
 
-app.post('/api/auth/login', (req, res) => {
+const RESET_TTL_MS = 60 * 60 * 1000; // password-reset links live for 1 hour
+
+// Request a password reset. Always responds ok (never reveals whether an account
+// exists). If the email matches, mints a short-lived token and emails the link;
+// with no mail provider the link is returned so the flow still works in beta.
+app.post('/api/auth/forgot-password', authLimiter, (req, res) => {
+  const cleanEmail = String(req.body?.email || '').trim().toLowerCase();
+  const account = isEmail(cleanEmail) ? data.accounts[cleanEmail] : null;
+  const resp = { ok: true };
+  if (account) {
+    account.resetToken = crypto.randomBytes(24).toString('hex');
+    account.resetTokenExp = new Date(Date.now() + RESET_TTL_MS).toISOString();
+    save();
+    const link = `${APP_URL}/reset?token=${account.resetToken}`;
+    sendMail({
+      to: account.email,
+      subject: 'Reset your SoilConnect password',
+      text: `Hi ${account.name},\n\nReset your password with the link below (valid for 1 hour):\n${link}\n\nIf you didn't request this, you can ignore this email.`,
+    });
+    // No real mail provider -> hand the link back so the user isn't stuck.
+    if (EMAIL_TEST_MODE) resp.resetUrl = link;
+  }
+  res.json(resp);
+});
+
+// Complete a password reset using the emailed token (no auth — token authenticates).
+app.post('/api/auth/reset-password', authLimiter, (req, res) => {
+  const { token, password } = req.body || {};
+  if (!token) return res.status(400).json({ error: 'Missing reset token.' });
+  if (!password || password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+  }
+  const account = Object.values(data.accounts).find((a) => a.resetToken === token);
+  if (!account || !account.resetTokenExp || new Date(account.resetTokenExp) < new Date()) {
+    return res.status(400).json({ error: 'This reset link is invalid or has expired.' });
+  }
+  account.password = hashPassword(password);
+  delete account.resetToken;
+  delete account.resetTokenExp;
+  // Invalidate every existing session for this account — a reset should log out
+  // any other devices (and anyone who may have had the old password).
+  for (const [tok, email] of Object.entries(data.sessions)) {
+    if (email === account.email) delete data.sessions[tok];
+  }
+  save();
+  res.json({ ok: true });
+});
+
+app.post('/api/auth/login', authLimiter, (req, res) => {
   const { email, password } = req.body || {};
   const cleanEmail = String(email || '').trim().toLowerCase();
   if (!isEmail(cleanEmail)) return res.status(400).json({ error: 'Please enter a valid email address.' });
@@ -326,7 +438,7 @@ app.get('/api/listings', requireAuth, (req, res) => {
   res.json(data.listings.map(withSeller));
 });
 
-app.post('/api/listings', requireAuth, requireVerified, requireCanPost, (req, res) => {
+app.post('/api/listings', writeLimiter, requireAuth, requireVerified, requireCanPost, (req, res) => {
   const b = req.body || {};
   const listing = {
     id: newId('lst'),
@@ -399,7 +511,7 @@ app.get('/api/requests', requireAuth, (req, res) => {
   res.json(visible.map(withBuyer));
 });
 
-app.post('/api/requests', requireAuth, requireVerified, requireCanPost, (req, res) => {
+app.post('/api/requests', writeLimiter, requireAuth, requireVerified, requireCanPost, (req, res) => {
   const b = req.body || {};
   const request = {
     id: newId('req'),
@@ -592,7 +704,7 @@ app.get('/api/bids', requireAuth, (req, res) => {
   res.json(visible.map(withHauler));
 });
 
-app.post('/api/bids', requireAuth, requireVerified, requireHaulerPlan, (req, res) => {
+app.post('/api/bids', writeLimiter, requireAuth, requireVerified, requireHaulerPlan, (req, res) => {
   const b = req.body || {};
   const bid = {
     id: newId('bid'),
@@ -718,7 +830,7 @@ app.get('/api/threads', requireAuth, (req, res) => {
   res.json(threads);
 });
 
-app.post('/api/messages', requireAuth, requireVerified, (req, res) => {
+app.post('/api/messages', writeLimiter, requireAuth, requireVerified, (req, res) => {
   const b = req.body || {};
   const role = threadRole(b.threadId, req.userEmail);
   if (!role) {

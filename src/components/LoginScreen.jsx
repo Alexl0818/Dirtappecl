@@ -73,6 +73,15 @@ const LoginScreen = () => {
             >
               {submitting ? "Signing in…" : "Continue"}
             </button>
+
+            <div style={{ textAlign: "center" }}>
+              <span
+                style={{ color: "#86efac", cursor: "pointer", fontSize: 13, textDecoration: "underline" }}
+                onClick={() => navigate("/forgot")}
+              >
+                Forgot password?
+              </span>
+            </div>
           </div>
         </GlassCard>
 

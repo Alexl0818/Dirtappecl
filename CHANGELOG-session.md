@@ -1,6 +1,29 @@
 # Session Changelog — Hardening & Geo Map
 
-## 🧭 Removed role selection (latest)
+## 🚀 Beta-launch prep — Phase 0 hardening (latest)
+
+Added a printable [BETA-LAUNCH-CHECKLIST.md](BETA-LAUNCH-CHECKLIST.md) +
+sequenced [BETA-ROADMAP.md](BETA-ROADMAP.md), then knocked out Phase 0 (all
+code, no external accounts needed):
+
+- **Verification toggle** — `REQUIRE_VERIFICATION` env. Defaults ON only when real
+  SMTP is set, otherwise auto-verifies new signups so beta testers aren't locked
+  out by an undeliverable link.
+- **Password reset** — `forgot-password` → emailed (or, in no-SMTP beta, returned)
+  reset link → `reset-password`. New `/forgot` + `/reset` screens, a "Forgot
+  password?" link on login, 1-hour token expiry, and all sessions invalidated on
+  reset. Verified end-to-end in the browser.
+- **Rate limiting** — in-memory per-IP limiter: tight on auth (30/15min), looser on
+  content creation (40/min). Returns 429 + Retry-After.
+- **CORS lock** — origin allowlist from `CORS_ORIGIN` (reflects origin in dev).
+- **Body-size cap** — JSON limited to 256kb (413 on oversize).
+- **Config** — `.env.example` documents every knob; server auto-loads `.env`
+  (zero-dependency, via a `load-env.js` side-effect import).
+
+Verified live: signup auto-verifies, reset flow works UI + API, rate limit trips,
+oversized bodies rejected, no-leak on unknown-email reset, console clean.
+
+## 🧭 Removed role selection
 
 Buyers/sellers/haulers are no longer separate roles. There's no "choose your role"
 screen at login and no role picker in Profile — every signed-in user reaches all
