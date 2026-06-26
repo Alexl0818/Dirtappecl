@@ -1,42 +1,39 @@
 # Render blueprint for SoilConnect (single web service).
 # One service builds the React frontend and serves it together with the Express
-# API. Import this repo on render.com and it will pick this up automatically.
+# API. Import this repo on render.com and Render reads this file automatically.
 #
-# NOTE: the persistent disk below keeps the JSON datastore across restarts and
-# redeploys. Disks require a paid instance type (the free plan has an ephemeral
-# filesystem that wipes data on every deploy). For a tiny free-plan beta you can
-# remove the `disk:` block and DATA_DIR — just know data resets on redeploy
-# until we move to Postgres (Phase 1).
+# DEFAULT = FREE ($0). The free plan is great for a first beta but has two limits:
+#   1) the service "sleeps" after ~15 min of no traffic, so the first visit after
+#      idle takes ~30-60s to wake up (then it's fast again);
+#   2) no permanent storage — the JSON datastore resets on every redeploy.
+#      Fine for kicking the tires; not for real customer data yet.
+#
+# TO UPGRADE LATER (always-on + data that survives redeploys), in the Render
+# dashboard change the instance type to "Starter" (about $7/month) and add a
+# disk mounted at /data, then set DATA_DIR=/data. No file editing required.
 
 services:
   - type: web
     name: soilconnect
     runtime: node
-    plan: starter
+    plan: free
     buildCommand: npm install && npm run build
     startCommand: node server.js
     healthCheckPath: /api/health
     autoDeploy: true
-    disk:
-      name: soilconnect-data
-      mountPath: /data
-      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
       # Beta: auto-verify users until real SMTP is wired (flip to "true" after).
       - key: REQUIRE_VERIFICATION
         value: "false"
-      # Persist the JSON store on the mounted disk above.
-      - key: DATA_DIR
-        value: /data
       # Public URL of the deployed app — used in verification/reset email links.
-      # Set this to your Render URL (e.g. https://soilconnect.onrender.com) in
-      # the dashboard after the first deploy, or here once you know it.
+      # Set this in the dashboard to your Render URL after the first deploy
+      # (e.g. https://soilconnect.onrender.com).
       - key: APP_URL
         sync: false
-      # SMTP — set these in the dashboard when you have a mail provider. Leaving
-      # them unset keeps email in test mode (links returned in API responses).
+      # SMTP — leave unset to keep email in test mode (links returned in API
+      # responses). Set these in the dashboard when you have a mail provider.
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT

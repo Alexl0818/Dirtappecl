@@ -22,11 +22,13 @@ A [`render.yaml`](render.yaml) blueprint is included.
    (e.g. `https://soilconnect.onrender.com`) so email links are correct. Redeploy.
 4. Open the URL and sign up — you're live.
 
-**Data persistence:** the blueprint mounts a 1 GB persistent disk at `/data` and
-sets `DATA_DIR=/data`, so the JSON store survives restarts and redeploys. Disks
-require a paid instance type. For a quick **free-plan** test you can delete the
-`disk:` block and `DATA_DIR` from `render.yaml` — but data will reset on every
-redeploy until we move to Postgres (Phase 1).
+**Cost & data persistence:** the blueprint defaults to Render's **free plan
+($0)** — perfect for a first beta. Two caveats on free: the service sleeps after
+~15 min idle (first visit then takes ~30–60s to wake), and there's no permanent
+storage, so the JSON datastore resets on each redeploy. To go **always-on with
+durable data**, upgrade the instance to **Starter (~$7/mo)** in the dashboard,
+add a disk mounted at `/data`, and set `DATA_DIR=/data` — no file editing needed.
+(The durable-data limitation goes away entirely once we move to Postgres, Phase 1.)
 
 ## Option B — Docker (Fly.io, Railway, any container host)
 
