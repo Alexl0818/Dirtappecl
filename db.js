@@ -11,8 +11,25 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_FILE = path.join(__dirname, "data.json");
+
+// Where the JSON store lives. Defaults to ./data.json next to this file. In
+// production set DATA_FILE (full path) or DATA_DIR (directory) to point at a
+// MOUNTED PERSISTENT DISK — otherwise the host's ephemeral filesystem wipes the
+// data on every redeploy/restart. (This is the JSON-store limitation we replace
+// with Postgres in Phase 1.)
+const DATA_FILE =
+  process.env.DATA_FILE ||
+  (process.env.DATA_DIR
+    ? path.join(process.env.DATA_DIR, "data.json")
+    : path.join(__dirname, "data.json"));
 const TMP_FILE = DATA_FILE + ".tmp";
+
+// Make sure the target directory exists (e.g. a freshly-mounted volume).
+try {
+  fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
+} catch {
+  /* best-effort; write errors are handled below */
+}
 
 const EMPTY = {
   accounts: {}, // email -> { name, email, password, company, phone, region, roles, createdAt }

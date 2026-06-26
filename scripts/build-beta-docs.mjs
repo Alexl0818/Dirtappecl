@@ -150,11 +150,12 @@ function buildChecklist() {
   c.push(checkItem("todo", [txt("Automated backup (snapshot/dump on a schedule)")]));
 
   c.push(h1("Phase 2 — Deployment  (get a shareable URL)"));
-  c.push(checkItem("todo", [txt("Pick hosts (Render/Railway/Fly for API, Vercel/Netlify for UI)")]));
-  c.push(checkItem("todo", [bold("Backend"), txt(" deploy config (Dockerfile / Procfile / render.yaml)")]));
-  c.push(checkItem("todo", [bold("Frontend"), txt(" build + deploy, pointed at production API URL")]));
-  c.push(checkItem("todo", [txt("Production environment variables set on hosts")]));
-  c.push(checkItem("todo", [txt("HTTPS + custom domain (optional but recommended)")]));
+  c.push(checkItem("done", [bold("Single-service architecture"), txt(" — Express serves built frontend + API on one origin (no CORS)")]));
+  c.push(checkItem("done", [bold("Deploy config"), txt(" committed: Dockerfile, render.yaml, npm start, configurable data dir")]));
+  c.push(checkItem("done", [bold("Production build"), txt(" verified locally (serves UI + API, SPA routing, data persists)")]));
+  c.push(checkItem("todo", [bold("Pick a host & deploy"), txt(" (Render Blueprint recommended) "), muted("— needs your host account")]));
+  c.push(checkItem("todo", [txt("Set production environment variables on the host (APP_URL, attach persistent disk)")]));
+  c.push(checkItem("todo", [txt("HTTPS + custom domain (optional; host provides HTTPS by default)")]));
   c.push(checkItem("todo", [txt("Smoke-test the full loop on the live URL")]));
 
   c.push(h1("Phase 3 — Integrations  (need your credentials)"));

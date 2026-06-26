@@ -1,9 +1,14 @@
 import './load-env.js'; // must be first — loads .env before any env-reading module
 import express from 'express';
 import crypto from 'crypto';
+import path from 'node:path';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import OpenAI from 'openai';
 import { data, save } from './db.js';
 import { sendMail, APP_URL, EMAIL_TEST_MODE } from './email.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 app.use(express.json({ limit: '256kb' })); // cap body size — reject oversized payloads
@@ -1004,9 +1009,33 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-const PORT = 3001;
+/* ------------------------------------------------------------------ *
+ * Static frontend (single-service deploy)
+ *
+ * In production we serve the built React app (dist/) from this same server so
+ * the whole app lives on ONE origin under ONE URL — no CORS, one deploy. Any
+ * non-API GET falls through to index.html so client-side routes resolve.
+ * Enabled when NODE_ENV=production (or SERVE_STATIC=true) and dist/ exists.
+ * ------------------------------------------------------------------ */
+const DIST_DIR = path.join(__dirname, 'dist');
+const SERVE_STATIC =
+  process.env.NODE_ENV === 'production' || process.env.SERVE_STATIC === 'true';
+if (SERVE_STATIC) {
+  if (fs.existsSync(path.join(DIST_DIR, 'index.html'))) {
+    app.use(express.static(DIST_DIR));
+    app.use((req, res, next) => {
+      if (req.method !== 'GET' || req.path.startsWith('/api/')) return next();
+      res.sendFile(path.join(DIST_DIR, 'index.html'));
+    });
+    console.log('serving built frontend from', DIST_DIR);
+  } else {
+    console.warn(`SERVE_STATIC is on but ${DIST_DIR}/index.html is missing — run "npm run build" first.`);
+  }
+}
+
+const PORT = Number(process.env.PORT) || 3001;
 const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`API server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
 
 // If something is already serving on this port (e.g. a second launcher), exit

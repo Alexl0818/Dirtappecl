@@ -1,6 +1,28 @@
 # Session Changelog — Hardening & Geo Map
 
-## 🚀 Beta-launch prep — Phase 0 hardening (latest)
+## 📦 Beta-launch prep — Phase 2 deployment config (latest)
+
+Made the app deployable as a **single service** (one URL, no CORS): in
+production the Express server serves the built React app from `dist/` alongside
+the `/api` routes, with an SPA fallback for client routes.
+
+- `server.js` — reads `PORT` from env; serves `dist/` + SPA fallback when
+  `NODE_ENV=production` (or `SERVE_STATIC=true`); `/api/*` still 404s cleanly
+  (not swallowed by the fallback).
+- `db.js` — datastore path now configurable via `DATA_DIR`/`DATA_FILE` so a
+  mounted persistent disk survives redeploys (auto-creates the dir).
+- Deploy config: [Dockerfile](Dockerfile) + [.dockerignore](.dockerignore),
+  [render.yaml](render.yaml) blueprint (build + start + health check + 1GB disk),
+  `npm start` script, `engines.node >=20`.
+- [DEPLOY.md](DEPLOY.md) rewritten production-first (Render / Docker / any Node
+  host); `.env.example` gains `NODE_ENV`, `PORT`, `DATA_DIR`, `SERVE_STATIC`.
+
+Verified locally: `npm run build` → `NODE_ENV=production PORT=4000
+DATA_DIR=/tmp/... node server.js` serves the app at `/`, client routes resolve,
+assets load, `/api/health` ok, unknown `/api` 404s, and a signup persists to the
+configured data dir without touching the real `data.json`.
+
+## 🚀 Beta-launch prep — Phase 0 hardening
 
 Added a printable [BETA-LAUNCH-CHECKLIST.md](BETA-LAUNCH-CHECKLIST.md) +
 sequenced [BETA-ROADMAP.md](BETA-ROADMAP.md), then knocked out Phase 0 (all

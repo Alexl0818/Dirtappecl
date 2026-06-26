@@ -1,75 +1,132 @@
-# Deploying Site-Sync to Replit
+# Deploying SoilConnect
 
-The app is a Vite front end + a small Express API (with a JSON datastore). One
-command runs both, so deployment is simple.
+SoilConnect is a **single service**: the Express server (`server.js`) serves both
+the API (`/api/*`) and the built React frontend (`dist/`). One process, one port,
+one URL — no CORS to configure, one thing to deploy.
 
-## Put it live (Replit)
+- **Build:** `npm install && npm run build`  (compiles the React app into `dist/`)
+- **Run:**   `node server.js`  (serves API + frontend when `NODE_ENV=production`)
+- **Health check:** `GET /api/health` → `{"status":"ok"}`
 
-1. Go to **replit.com** → **Create / Import** → **Import from a .zip file** and
-   upload `Site-Sync-replit.zip`.
-2. Click **Run**. Replit installs dependencies, then `npm run dev` starts Vite,
-   which auto-starts the API server. The web preview opens automatically.
-3. Sign up an account in the app and you're in. Open the app from another
-   device/browser and you'll share the same data — that's the multi-user backend.
+---
 
-That's it. No API keys or external accounts required.
+## Option A — Render (recommended, no Docker needed)
 
-## How it runs
+A [`render.yaml`](render.yaml) blueprint is included.
 
-- `npm run dev` → `vite`. A dev-only Vite plugin (`vite.config.js`) spawns
-  `server.js` (the API) on port 3001; Vite proxies `/api` to it. The server
-  exits quietly if 3001 is already taken, so a double-start is safe.
-- Data lives in `data.json` (gitignored), written atomically and flushed on
-  shutdown.
+1. Push this repo to GitHub.
+2. On **render.com** → **New** → **Blueprint**, pick the repo. Render reads
+   `render.yaml`, builds (`npm install && npm run build`), and starts
+   (`node server.js`).
+3. After the first deploy, set **`APP_URL`** in the dashboard to your service URL
+   (e.g. `https://soilconnect.onrender.com`) so email links are correct. Redeploy.
+4. Open the URL and sign up — you're live.
 
-## Data durability — important
+**Data persistence:** the blueprint mounts a 1 GB persistent disk at `/data` and
+sets `DATA_DIR=/data`, so the JSON store survives restarts and redeploys. Disks
+require a paid instance type. For a quick **free-plan** test you can delete the
+`disk:` block and `DATA_DIR` from `render.yaml` — but data will reset on every
+redeploy until we move to Postgres (Phase 1).
 
-- **On a normal Repl (Run button):** the filesystem persists, so `data.json`
-  survives restarts. Good for testing and early users.
-- **On a published Replit Deployment:** the filesystem can reset on each
-  redeploy. Before relying on it for real customer data, move the store to a
-  durable backend. The cleanest swap (no UI changes — only `db.js` + the few
-  `server.js` handlers) is **Replit Database** (`@replit/database`, free,
-  built-in) or Postgres/Supabase. The API surface is already isolated for this.
+## Option B — Docker (Fly.io, Railway, any container host)
 
-## Email (notifications + verification)
+A [`Dockerfile`](Dockerfile) is included (builds the frontend, runs the server).
 
-The app sends transactional emails (new request, accept/decline, new bid, award,
-delivered, new message) and an account-verification link on signup.
+```bash
+docker build -t soilconnect .
+docker run -p 3001:3001 -v soilconnect-data:/app/data soilconnect
+```
 
-- **Without config:** it uses an **Ethereal test inbox** — emails aren't really
-  delivered; a preview URL is logged to the server console. Fine for testing.
-- **To send real email:** set these env vars (Replit Secrets) and restart:
-  - `SMTP_HOST`, `SMTP_PORT` (587 or 465), `SMTP_USER`, `SMTP_PASS`
-  - `MAIL_FROM` (e.g. `SoilConnect <no-reply@yourdomain.com>`)
-  - `APP_URL` (your deployed URL, so links in emails point to the right place)
+The volume at `/app/data` (with `DATA_DIR=/app/data`, already set in the image)
+keeps the datastore across container restarts. On Fly/Railway, attach a volume
+to that path.
 
-  Any SMTP provider works (e.g. a free tier of Brevo/Mailjet/Resend-SMTP, or
+## Option C — any Node host (manual)
+
+```bash
+npm install
+npm run build
+NODE_ENV=production DATA_DIR=/var/lib/soilconnect node server.js
+```
+
+Put it behind a reverse proxy (nginx/Caddy) for HTTPS, or use the host's TLS.
+
+---
+
+## Environment variables
+
+All optional for local dev (safe defaults). See [`.env.example`](.env.example)
+for the full list. The ones that matter in production:
+
+| Var | What | Recommended for beta |
+|---|---|---|
+| `NODE_ENV` | `production` enables serving `dist/` | `production` |
+| `PORT` | port to listen on | injected by host (Render sets it) |
+| `DATA_DIR` | directory for `data.json` (use a mounted disk) | `/data` (or volume path) |
+| `APP_URL` | public URL, used in email links | your deployed URL |
+| `REQUIRE_VERIFICATION` | force email verification on/off | `false` until SMTP is set |
+| `CORS_ORIGIN` | allowed browser origins (comma-sep) | unset (single-origin needs none) |
+| `SMTP_*`, `MAIL_FROM` | real email (see below) | unset until ready |
+
+Because the frontend is served from the same origin as the API, **`CORS_ORIGIN`
+is not needed** for the normal single-service setup. Only set it if you later
+split the frontend onto a different domain.
+
+---
+
+## Email (notifications + verification + password reset)
+
+The app sends transactional email (new request, accept/decline, new bid, award,
+delivered, new message), the signup verification link, and password-reset links.
+
+- **Without SMTP config:** it uses an **Ethereal test inbox** — nothing is really
+  delivered; verification/reset links are returned in the API response and a
+  preview URL is logged. In this mode the app **auto-verifies** new signups so
+  testers aren't locked out. Good for a first beta.
+- **To send real email:** set `SMTP_HOST`, `SMTP_PORT` (587 or 465), `SMTP_USER`,
+  `SMTP_PASS`, and `MAIL_FROM`, then set `REQUIRE_VERIFICATION=true` to enforce
+  verification. Any provider works (Resend, Postmark, SendGrid, Brevo/Mailjet, or
   Gmail with an app password for low volume).
+
+---
 
 ## Billing / subscriptions
 
 Free for everyone until a user-count threshold, then role-based plans (end users:
-1 free post/month then a Poster sub; haulers: a flat sub to bid).
+1 free post/month then a Poster sub; haulers: a flat sub to bid). All billing UI
+is hidden while free.
 
 - **Stays free** until `FREE_USER_THRESHOLD` accounts (default 100). Force paid
-  mode anytime with `BILLING_ENABLED=true`.
-- Tunable via env: `FREE_USER_THRESHOLD`, `FREE_POSTS_PER_MONTH`,
-  `ENDUSER_PRICE`, `HAULER_PRICE`, `BILLING_ENABLED`.
-- **No card is charged yet.** `POST /api/billing/subscribe` is a stub that marks
-  the account active. To go live: replace that stub with a **Stripe Checkout**
-  session and add a **Stripe webhook** that sets `account.subscription`
-  (status/plan/currentPeriodEnd) on `checkout.session.completed` /
-  `customer.subscription.updated|deleted`. All the gating (402 `subscription_required`,
+  mode with `BILLING_ENABLED=true`.
+- Tunable via env: `FREE_USER_THRESHOLD`, `FREE_POSTS_PER_MONTH`, `ENDUSER_PRICE`,
+  `HAULER_PRICE`, `BILLING_ENABLED`.
+- **No card is charged yet.** `POST /api/billing/subscribe` is a stub. To go live:
+  replace it with a **Stripe Checkout** session + a **Stripe webhook** that sets
+  `account.subscription` on `checkout.session.completed` /
+  `customer.subscription.updated|deleted`. All gating (402 `subscription_required`,
   metering, role plans) is already in place — only the payment seam is left.
 
-## Optional: AI assistant
+---
 
-`server.js` has an unused `/api/chat` endpoint. To enable it later, add an
-`OPENAI_API_KEY` in Replit **Secrets**. The app runs fine without it.
+## Already hardened
 
-## Security note (prototype)
+- Passwords scrypt-hashed; all routes auth-guarded with per-user scoping.
+- Per-IP **rate limiting** on auth + write endpoints; JSON body size capped.
+- **CORS** allowlist via env; **password reset** + **email verification** flows.
 
-Passwords are scrypt-hashed and routes are auth-guarded with per-user scoping.
-Before a public launch, also add HTTPS-only cookies/session hardening and rate
-limiting — standard production hardening beyond this prototype.
+## Still recommended before opening wide
+
+- Move the JSON store to **Postgres** (Phase 1) for concurrent-write safety.
+- **Error monitoring** (e.g. Sentry) and uptime checks (Phase 4).
+- Closed-beta **invite gating** + **Privacy Policy/Terms** (Phase 5).
+
+See [BETA-ROADMAP.md](BETA-ROADMAP.md) for the full sequence.
+
+---
+
+## Local development
+
+`npm run dev` runs Vite (frontend) and auto-spawns `server.js` (API) via a
+dev-only plugin in `vite.config.js`; Vite proxies `/api` to port 3001. The
+server exits quietly if its port is taken, so a double-start is safe. Data lives
+in `data.json` (gitignored), written atomically and flushed on shutdown.

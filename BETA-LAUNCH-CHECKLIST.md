@@ -27,11 +27,12 @@ _Last updated: 2026-06-26_
 
 ## PHASE 2 — Deployment (get a shareable URL)
 
-- [ ] Pick hosts (e.g. Render/Railway/Fly for API, Vercel/Netlify for UI)
-- [ ] **Backend** deploy config (Dockerfile / Procfile / render.yaml)
-- [ ] **Frontend** build + deploy, pointed at production API URL
-- [ ] Production **environment variables** set on hosts
-- [ ] HTTPS + custom domain (optional but recommended)
+- [x] **Single-service architecture** — Express serves built frontend + API on one origin (no CORS)
+- [x] **Deploy config** committed: Dockerfile, render.yaml blueprint, `npm start`, configurable data dir
+- [x] Production build verified locally (serves UI + API, SPA routing, data persists to mounted dir)
+- [ ] **Pick a host & deploy** (Render Blueprint recommended) — _needs your host account_
+- [ ] Set production **env vars** on the host (`APP_URL`, attach persistent disk)
+- [ ] HTTPS + custom domain (optional; host provides HTTPS by default)
 - [ ] Smoke-test the full loop on the live URL
 
 ## PHASE 3 — Integrations (need your credentials)
