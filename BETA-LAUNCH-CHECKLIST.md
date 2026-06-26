@@ -9,12 +9,12 @@ _Last updated: 2026-06-26_
 
 ## PHASE 0 — Code hardening (no accounts/credentials needed)
 
-- [ ] Make email verification **non-blocking for beta** (env toggle so testers aren't locked out before real SMTP)
-- [ ] **Password reset** flow ("forgot password" → email link → set new password)
-- [ ] **Rate limiting** on public API (signup/login/post abuse protection)
-- [ ] Lock down **CORS** to the real frontend domain (currently open to `*`)
-- [ ] Server-side **input validation** pass on all write endpoints
-- [ ] `.env.example` documenting every config value
+- [x] Make email verification **non-blocking for beta** (env toggle so testers aren't locked out before real SMTP)
+- [x] **Password reset** flow ("forgot password" → email link → set new password)
+- [x] **Rate limiting** on public API (signup/login/post abuse protection)
+- [x] Lock down **CORS** to the real frontend domain (env allowlist; reflects origin in dev)
+- [◐] Server-side **input validation** pass on all write endpoints _(body-size cap + core validation done; full sweep pending)_
+- [x] `.env.example` documenting every config value
 - [ ] Friendly **404 / error pages** + API error shape consistency
 - [ ] Confirm **data backups** strategy (even if just a daily file copy for now)
 
