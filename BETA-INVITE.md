@@ -3,7 +3,7 @@
 Everything you need to invite your first testers. The app is live, durable, and
 emailing from your authenticated domain. Just send the invite below.
 
-**Live app:** https://haulyard.onrender.com
+**Live app:** https://app.eclsite.com
 
 ---
 
@@ -19,7 +19,7 @@ emailing from your authenticated domain. Just send the invite below.
 >
 > I'd love your honest take before I open it up. It's free and takes 30 seconds to start:
 >
-> 👉 **https://haulyard.onrender.com**
+> 👉 **https://app.eclsite.com**
 >
 > Just sign up and poke around — post a request or a listing, or browse the map. There's
 > a **"Send feedback"** button right in the app — tell me what's confusing, broken, or
