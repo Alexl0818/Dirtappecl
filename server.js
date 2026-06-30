@@ -983,6 +983,82 @@ app.post('/api/admin/suspend', requireAuth, requireAdmin, (req, res) => {
 });
 
 /* ------------------------------------------------------------------ *
+ * Dumpsites — directory of disposal/dump sites (LCID, C&D, inert, etc.)
+ *
+ * Free for anyone signed-in to add. Admins can "feature" a site (paid
+ * placement); real billing is wired later. Featured sites sort to the top.
+ * ------------------------------------------------------------------ */
+app.get('/api/dumpsites', requireAuth, (req, res) => {
+  const sorted = [...data.dumpsites].sort((a, b) => {
+    if (!!b.featured !== !!a.featured) return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+    return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+  });
+  res.json(sorted);
+});
+
+app.post('/api/dumpsites', writeLimiter, requireAuth, requireVerified, (req, res) => {
+  const b = req.body || {};
+  if (!String(b.name || '').trim()) return res.status(400).json({ error: 'Please enter a site name.' });
+  const site = {
+    id: newId('dump'),
+    ownerEmail: req.userEmail,
+    createdAt: new Date().toISOString(),
+    name: String(b.name).trim(),
+    type: b.type || 'Other',
+    accepts: String(b.accepts || '').trim(),
+    location: String(b.location || '').trim(),
+    lat: b.lat,
+    lng: b.lng,
+    geoFormatted: b.geoFormatted,
+    phone: String(b.phone || '').trim(),
+    hours: String(b.hours || '').trim(),
+    price: String(b.price || '').trim(),
+    notes: String(b.notes || '').trim(),
+    // Only admins can mark a site featured (the paid tier); everyone else: false.
+    featured: isAdmin(req.userEmail) ? !!b.featured : false,
+  };
+  data.dumpsites.unshift(site);
+  save();
+  res.json(site);
+  notifyOwner(
+    `New dumpsite: ${site.name}`,
+    `${req.userEmail} added a dump site.\n\nName: ${site.name}\nType: ${site.type}\nLocation: ${site.location || '—'}\nAccepts: ${site.accepts || '—'}`,
+    req.userEmail
+  );
+});
+
+app.patch('/api/dumpsites/:id', requireAuth, requireVerified, (req, res) => {
+  const s = data.dumpsites.find((x) => String(x.id) === String(req.params.id));
+  if (!s) return res.status(404).json({ error: 'Site not found.' });
+  const admin = isAdmin(req.userEmail);
+  if (s.ownerEmail && s.ownerEmail !== req.userEmail && !admin) {
+    return res.status(403).json({ error: 'Not your site.' });
+  }
+  Object.assign(
+    s,
+    pick(req.body, ['name', 'type', 'accepts', 'location', 'lat', 'lng', 'geoFormatted', 'phone', 'hours', 'price', 'notes'])
+  );
+  if (req.body.featured !== undefined && admin) s.featured = !!req.body.featured;
+  save();
+  res.json(s);
+});
+
+app.delete('/api/dumpsites/:id', requireAuth, requireVerified, (req, res) => {
+  const idx = data.dumpsites.findIndex((x) => String(x.id) === String(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'Site not found.' });
+  if (
+    data.dumpsites[idx].ownerEmail &&
+    data.dumpsites[idx].ownerEmail !== req.userEmail &&
+    !isAdmin(req.userEmail)
+  ) {
+    return res.status(403).json({ error: 'Not your site.' });
+  }
+  data.dumpsites.splice(idx, 1);
+  save();
+  res.json({ ok: true });
+});
+
+/* ------------------------------------------------------------------ *
  * Messages
  * ------------------------------------------------------------------ */
 

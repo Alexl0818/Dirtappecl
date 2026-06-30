@@ -43,6 +43,7 @@ const EMPTY = {
   feedback: [], // { id, fromEmail, fromName, message, page, createdAt }
   inviteCodes: [], // { code, label, maxUses (null=unlimited), uses, createdAt, createdBy }
   settings: { inviteOnly: false }, // when true, signup requires a valid invite code
+  dumpsites: [], // { id, ownerEmail, name, type, accepts, location, lat, lng, phone, hours, price, notes, featured, createdAt }
 };
 
 let data;

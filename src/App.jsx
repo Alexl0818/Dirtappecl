@@ -38,6 +38,9 @@ import PrivacyPolicy from "./components/PrivacyPolicy";
 import TermsOfService from "./components/TermsOfService";
 import FeedbackScreen from "./components/FeedbackScreen";
 import AdminScreen from "./components/AdminScreen";
+import DumpsiteDirectory from "./components/DumpsiteDirectory";
+import NewDumpsite from "./components/NewDumpsite";
+import DumpsiteDetails from "./components/DumpsiteDetails";
 
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -159,6 +162,12 @@ function AppInner() {
           </ErrorBoundary>
         }
       />
+
+      {/* Dumpsites */}
+      <Route path="/dump" element={<ErrorBoundary><DumpsiteDirectory /></ErrorBoundary>} />
+      <Route path="/dump/new" element={<ErrorBoundary><NewDumpsite /></ErrorBoundary>} />
+      <Route path="/dump/edit/:id" element={<ErrorBoundary><NewDumpsite /></ErrorBoundary>} />
+      <Route path="/dump/:id" element={<ErrorBoundary><DumpsiteDetails /></ErrorBoundary>} />
 
       {/* Profile + Messages */}
       <Route path="/profile" element={<ProfileScreen />} />
