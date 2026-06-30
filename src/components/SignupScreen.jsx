@@ -98,6 +98,24 @@ const SignupScreen = () => {
             >
               {submitting ? "Creating…" : "Create account"}
             </button>
+
+            <p style={{ fontSize: 12, opacity: 0.75, textAlign: "center", margin: 0 }}>
+              By creating an account, you agree to our{" "}
+              <span
+                style={{ color: "#86efac", cursor: "pointer", textDecoration: "underline" }}
+                onClick={() => navigate("/terms")}
+              >
+                Terms
+              </span>{" "}
+              and{" "}
+              <span
+                style={{ color: "#86efac", cursor: "pointer", textDecoration: "underline" }}
+                onClick={() => navigate("/privacy")}
+              >
+                Privacy Policy
+              </span>
+              .
+            </p>
           </div>
         </GlassCard>
 

@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import GlassCard from "./GlassCard";
 import BottomNav from "./BottomNav";
+import WelcomeBanner from "./WelcomeBanner";
 import { useInquiry } from "./InquiryContext";
 import { useSellerListings } from "./SellerListingContext";
 import "./BuyerHome.css";
@@ -23,6 +24,7 @@ export default function BuyerHome() {
   return (
     <div className="app-root">
       <main className="app-main">
+        <WelcomeBanner />
         <div className="dashboard-header">
           <div>
             <h2 className="section-title">Buyer</h2>

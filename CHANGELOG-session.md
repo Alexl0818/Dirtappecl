@@ -1,6 +1,24 @@
 # Session Changelog — Hardening & Geo Map
 
-## 🔌 Configurable API base URL (phone-app ready) (latest)
+## 🧑‍🤝‍🧑 Beta-launch prep — Phase 5 (legal, feedback, welcome) (latest)
+
+The "ready to invite people" layer:
+- **Privacy Policy** (`/privacy`) and **Terms of Service** (`/terms`) — plain-language
+  beta templates (ECL Site Works LLC, contact alex@eclsite.com). Linked from the
+  signup form ("By creating an account, you agree to our Terms and Privacy Policy")
+  and from Profile.
+- **In-app feedback channel** — `/feedback` screen → `POST /api/feedback`, which
+  stores the note (`db.feedback`) AND emails it to the owner via the Brevo pipeline
+  (`FEEDBACK_TO`, default alex@eclsite.com). Reachable from Profile and the welcome
+  banner. 4000-char cap; empty rejected.
+- **Beta welcome banner** — a dismissible note on the buyer home (persists via
+  localStorage) explaining it's a beta and linking to feedback.
+
+Verified live: both legal pages render with content; welcome banner shows + dismiss
+works; feedback submits (200/ok), empty is rejected (400); console clean. Deploys
+on the next GitHub push.
+
+## 🔌 Configurable API base URL (phone-app ready)
 
 The frontend no longer hardcodes where the API lives. `src/lib/api.js` reads a
 build-time `VITE_API_URL`:

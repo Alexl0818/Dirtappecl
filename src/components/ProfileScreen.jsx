@@ -118,10 +118,22 @@ const ProfileScreen = () => {
         <button className="primary-button full-width" onClick={handleSave}>
           {saved ? "Saved ✓" : "Save changes"}
         </button>
+        <button
+          className="ghost-button"
+          onClick={() => navigate("/feedback", { state: { from: "/profile" } })}
+        >
+          Send feedback
+        </button>
         <button className="ghost-button" onClick={handleLogout}>
           Log out
         </button>
       </div>
+
+      <p style={{ marginTop: 16, fontSize: 12, opacity: 0.7, textAlign: "center" }}>
+        <span style={legalLink} onClick={() => navigate("/privacy")}>Privacy Policy</span>
+        {" · "}
+        <span style={legalLink} onClick={() => navigate("/terms")}>Terms of Service</span>
+      </p>
 
       <BottomNav />
     </div>
@@ -129,6 +141,7 @@ const ProfileScreen = () => {
 };
 
 const sectionTitle = { fontSize: "14px", fontWeight: 600, marginBottom: "8px" };
+const legalLink = { color: "#86efac", cursor: "pointer", textDecoration: "underline" };
 
 const Field = ({ label, value, onChange, placeholder, disabled }) => (
   <div style={{ marginBottom: "10px" }}>

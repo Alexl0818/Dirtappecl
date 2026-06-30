@@ -873,6 +873,36 @@ app.post('/api/messages', writeLimiter, requireAuth, requireVerified, (req, res)
 });
 
 /* ------------------------------------------------------------------ *
+ * Beta feedback — a signed-in user sends feedback; we store it and
+ * email the owner so nothing gets missed (uses the same mail pipeline).
+ * ------------------------------------------------------------------ */
+const FEEDBACK_TO = process.env.FEEDBACK_TO || 'alex@eclsite.com';
+app.post('/api/feedback', writeLimiter, requireAuth, (req, res) => {
+  const message = String(req.body?.message || '').trim();
+  const page = String(req.body?.page || '').slice(0, 200);
+  if (!message) return res.status(400).json({ error: 'Please enter your feedback.' });
+  if (message.length > 4000) return res.status(400).json({ error: 'Feedback is too long (4000 character max).' });
+  const account = data.accounts[req.userEmail];
+  const entry = {
+    id: newId('fb'),
+    fromEmail: req.userEmail,
+    fromName: account?.name || '',
+    message,
+    page,
+    createdAt: new Date().toISOString(),
+  };
+  data.feedback.push(entry);
+  save();
+  res.json({ ok: true });
+
+  sendMail({
+    to: FEEDBACK_TO,
+    subject: `SoilConnect beta feedback from ${entry.fromName || req.userEmail}`,
+    text: `From: ${entry.fromName} <${req.userEmail}>\nPage: ${page || 'n/a'}\nWhen: ${entry.createdAt}\n\n${message}`,
+  });
+});
+
+/* ------------------------------------------------------------------ *
  * Reviews
  * ------------------------------------------------------------------ */
 

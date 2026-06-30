@@ -34,6 +34,9 @@ import VerifyEmail from "./components/VerifyEmail";
 import VerifyGate from "./components/VerifyGate";
 import ForgotPassword from "./components/ForgotPassword";
 import ResetPassword from "./components/ResetPassword";
+import PrivacyPolicy from "./components/PrivacyPolicy";
+import TermsOfService from "./components/TermsOfService";
+import FeedbackScreen from "./components/FeedbackScreen";
 
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -59,6 +62,8 @@ function AppInner() {
       <Route path="/verify" element={<VerifyEmail />} />
       <Route path="/forgot" element={<ForgotPassword />} />
       <Route path="/reset" element={<ResetPassword />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsOfService />} />
 
       {/* Everything below requires a signed-in user */}
       <Route element={<RequireAuth />}>
@@ -156,6 +161,7 @@ function AppInner() {
 
       {/* Profile + Messages */}
       <Route path="/profile" element={<ProfileScreen />} />
+      <Route path="/feedback" element={<FeedbackScreen />} />
       <Route path="/messages" element={<MessagesInbox />} />
       <Route path="/messages/thread" element={<MessageThread />} />
       </Route>

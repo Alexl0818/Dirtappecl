@@ -40,6 +40,7 @@ const EMPTY = {
   bids: [],
   messages: [], // { id, threadId, senderEmail, fromRole, text, createdAt }
   reviews: [], // { id, fromEmail, toEmail, rating, comment, oppId, createdAt }
+  feedback: [], // { id, fromEmail, fromName, message, page, createdAt }
 };
 
 let data;
