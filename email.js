@@ -6,7 +6,7 @@
 import nodemailer from "nodemailer";
 
 export const APP_URL = process.env.APP_URL || "http://localhost:5173";
-const FROM = process.env.MAIL_FROM || "SoilConnect <no-reply@soilconnect.app>";
+const FROM = process.env.MAIL_FROM || "HaulYard <no-reply@haulyard.app>";
 
 // True when no real SMTP provider is configured (we're using the test inbox, so
 // emails aren't actually delivered). The app uses this to surface a direct

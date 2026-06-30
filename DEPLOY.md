@@ -1,6 +1,6 @@
-# Deploying SoilConnect
+# Deploying HaulYard
 
-SoilConnect is a **single service**: the Express server (`server.js`) serves both
+HaulYard is a **single service**: the Express server (`server.js`) serves both
 the API (`/api/*`) and the built React frontend (`dist/`). One process, one port,
 one URL — no CORS to configure, one thing to deploy.
 
@@ -19,7 +19,7 @@ A [`render.yaml`](render.yaml) blueprint is included.
    `render.yaml`, builds (`npm install && npm run build`), and starts
    (`node server.js`).
 3. After the first deploy, set **`APP_URL`** in the dashboard to your service URL
-   (e.g. `https://soilconnect.onrender.com`) so email links are correct. Redeploy.
+   (e.g. `https://haulyard.onrender.com`) so email links are correct. Redeploy.
 4. Open the URL and sign up — you're live.
 
 **Cost & data persistence:** the blueprint defaults to Render's **free plan
@@ -35,8 +35,8 @@ add a disk mounted at `/data`, and set `DATA_DIR=/data` — no file editing need
 A [`Dockerfile`](Dockerfile) is included (builds the frontend, runs the server).
 
 ```bash
-docker build -t soilconnect .
-docker run -p 3001:3001 -v soilconnect-data:/app/data soilconnect
+docker build -t haulyard .
+docker run -p 3001:3001 -v haulyard-data:/app/data haulyard
 ```
 
 The volume at `/app/data` (with `DATA_DIR=/app/data`, already set in the image)
@@ -48,7 +48,7 @@ to that path.
 ```bash
 npm install
 npm run build
-NODE_ENV=production DATA_DIR=/var/lib/soilconnect node server.js
+NODE_ENV=production DATA_DIR=/var/lib/haulyard node server.js
 ```
 
 Put it behind a reverse proxy (nginx/Caddy) for HTTPS, or use the host's TLS.

@@ -32,7 +32,7 @@ export default function VerifyGate() {
         <GlassCard className="dashboard-card" style={{ marginTop: 12 }}>
           <div className="card-description" style={{ marginBottom: 12 }}>
             We sent a verification link to <strong>{user?.email}</strong>. Confirm
-            your email to start using SoilConnect.
+            your email to start using HaulYard.
           </div>
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>

@@ -42,7 +42,7 @@ export default function FeedbackScreen() {
         <div className="dashboard-header">
           <div>
             <h2 className="section-title">Send feedback</h2>
-            <p className="section-subtitle">Help shape SoilConnect — tell us what works or what's broken.</p>
+            <p className="section-subtitle">Help shape HaulYard — tell us what works or what's broken.</p>
           </div>
         </div>
 
@@ -50,7 +50,7 @@ export default function FeedbackScreen() {
           {sent ? (
             <div className="form-grid">
               <div className="card-description">
-                🙏 Thanks! Your feedback was sent to the SoilConnect team. We read every note.
+                🙏 Thanks! Your feedback was sent to the HaulYard team. We read every note.
               </div>
               <button className="primary-button full-width" onClick={() => navigate("/buyer/home")}>
                 Back to the app

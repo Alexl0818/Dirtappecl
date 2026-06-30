@@ -1,25 +1,25 @@
-# 🚀 SoilConnect — Beta Invite Kit
+# 🚀 HaulYard — Beta Invite Kit
 
 Everything you need to invite your first testers. The app is live, durable, and
 emailing from your authenticated domain. Just send the invite below.
 
-**Live app:** https://soilconnect.onrender.com
+**Live app:** https://haulyard.onrender.com
 
 ---
 
 ## 1. Copy-paste invite (text or email)
 
-> **Subject: Want to try SoilConnect? (early access)**
+> **Subject: Want to try HaulYard? (early access)**
 >
 > Hey [Name],
 >
-> I built a simple app called **SoilConnect** — it connects people who have soil/fill
+> I built a simple app called **HaulYard** — it connects people who have soil/fill
 > material with people who need it, plus haulers to move it. No middlemen, no fees on
 > your deals.
 >
 > I'd love your honest take before I open it up. It's free and takes 30 seconds to start:
 >
-> 👉 **https://soilconnect.onrender.com**
+> 👉 **https://haulyard.onrender.com**
 >
 > Just sign up and poke around — post a request or a listing, or browse the map. There's
 > a **"Send feedback"** button right in the app — tell me what's confusing, broken, or
@@ -37,7 +37,7 @@ to wake up, then it's fast. That's normal on the current plan.)*
 
 Paste this if a tester wants direction:
 
-> **3 things to try in SoilConnect:**
+> **3 things to try in HaulYard:**
 > 1. **Post a request** (Buy tab → New Request) — say what material you need and where.
 > 2. **Post a listing** (Sell tab → New Listing) — list material you have available.
 > 3. **Browse the map** (Buy → Map View) — see what's nearby.

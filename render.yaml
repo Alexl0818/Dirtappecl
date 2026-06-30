@@ -1,4 +1,4 @@
-# Render blueprint for SoilConnect (single web service).
+# Render blueprint for HaulYard (single web service).
 # One service builds the React frontend and serves it together with the Express
 # API. Import this repo on render.com and Render reads this file automatically.
 #
@@ -14,7 +14,7 @@
 
 services:
   - type: web
-    name: soilconnect
+    name: haulyard
     runtime: node
     plan: free
     buildCommand: npm install && npm run build
@@ -29,7 +29,7 @@ services:
         value: "false"
       # Public URL of the deployed app — used in verification/reset email links.
       # Set this in the dashboard to your Render URL after the first deploy
-      # (e.g. https://soilconnect.onrender.com).
+      # (e.g. https://haulyard.onrender.com).
       - key: APP_URL
         sync: false
       # SMTP — leave unset to keep email in test mode (links returned in API

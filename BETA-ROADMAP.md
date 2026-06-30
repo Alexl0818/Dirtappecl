@@ -1,4 +1,4 @@
-# 🗺️ SoilConnect — Beta Launch Roadmap
+# 🗺️ HaulYard — Beta Launch Roadmap
 
 A sequenced plan behind [BETA-LAUNCH-CHECKLIST.md](BETA-LAUNCH-CHECKLIST.md). The phases are
 ordered by dependency: each unlocks the next. Items marked **[Claude]** I can do now without you;

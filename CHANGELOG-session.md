@@ -38,7 +38,7 @@ The frontend no longer hardcodes where the API lives. `src/lib/api.js` reads a
 build-time `VITE_API_URL`:
 - **Unset (default):** uses a relative `/api` path — correct for the
   single-service web deploy (frontend + API share one address) and dev.
-- **Set:** bakes in an absolute API URL (e.g. `https://soilconnect.onrender.com`)
+- **Set:** bakes in an absolute API URL (e.g. `https://haulyard.onrender.com`)
   — what a future native phone-app build needs (it can't use a relative path).
 
 Documented in `.env.example`. Verified both builds: default keeps `/api` with no
@@ -284,7 +284,7 @@ backend — no separate step. Server exits quietly if its port is already taken
 
 
 
-App: **SoilConnect** (Site-Sync) — soil marketplace (buyer ↔ seller ↔ hauler).
+App: **HaulYard** (Site-Sync) — soil marketplace (buyer ↔ seller ↔ hauler).
 Run goal (per Alex): make it a solid, bug-free app + real Google Maps geo map + simulated login. No payments (subscription model). No backend yet.
 
 Dev server runs locally on **http://localhost:5173** (port 5000 is taken by macOS Control Center).

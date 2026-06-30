@@ -18,16 +18,16 @@ export default function PrivacyPolicy() {
         <div className="dashboard-header">
           <div>
             <h2 className="section-title">Privacy Policy</h2>
-            <p className="section-subtitle">SoilConnect (ECL Site Works LLC) · Updated {UPDATED}</p>
+            <p className="section-subtitle">HaulYard (ECL Site Works LLC) · Updated {UPDATED}</p>
           </div>
         </div>
 
         <GlassCard className="dashboard-card">
           <div className="card-description" style={{ lineHeight: 1.6 }}>
             <p>
-              SoilConnect is a marketplace that connects people who have soil/material with people who
+              HaulYard is a marketplace that connects people who have soil/material with people who
               need it, and with haulers who move it. This policy explains what we collect and how we use it.
-              SoilConnect is currently in <strong>beta</strong>.
+              HaulYard is currently in <strong>beta</strong>.
             </p>
 
             <Section title="What we collect">
@@ -58,7 +58,7 @@ export default function PrivacyPolicy() {
               <p>
                 We do <strong>not</strong> sell your personal information. We use a third-party email provider
                 (Brevo) and hosting provider to deliver the service; address validation uses OpenStreetMap’s
-                Nominatim. These providers process data only to operate SoilConnect.
+                Nominatim. These providers process data only to operate HaulYard.
               </p>
             </Section>
 

@@ -315,8 +315,8 @@ function sendVerificationEmail(account) {
   if (!account || account.verified || !account.verifyToken) return;
   sendMail({
     to: account.email,
-    subject: "Verify your SoilConnect email",
-    text: `Welcome to SoilConnect, ${account.name}!\n\nConfirm your email to get the verified badge:\n${APP_URL}/verify?token=${account.verifyToken}`,
+    subject: "Verify your HaulYard email",
+    text: `Welcome to HaulYard, ${account.name}!\n\nConfirm your email to get the verified badge:\n${APP_URL}/verify?token=${account.verifyToken}`,
   });
 }
 
@@ -363,7 +363,7 @@ app.post('/api/auth/forgot-password', authLimiter, (req, res) => {
     const link = `${APP_URL}/reset?token=${account.resetToken}`;
     sendMail({
       to: account.email,
-      subject: 'Reset your SoilConnect password',
+      subject: 'Reset your HaulYard password',
       text: `Hi ${account.name},\n\nReset your password with the link below (valid for 1 hour):\n${link}\n\nIf you didn't request this, you can ignore this email.`,
     });
     // No real mail provider -> hand the link back so the user isn't stuck.
@@ -695,7 +695,7 @@ app.post('/api/opportunities/:id/complete', requireAuth, requireVerified, (req, 
     sendMail({
       to: request.buyerEmail,
       subject: "Your order was delivered",
-      text: `Your ${o.material} order has been marked delivered. Thanks for using SoilConnect!\n\nLeave a rating: ${APP_URL}/buyer/requests`,
+      text: `Your ${o.material} order has been marked delivered. Thanks for using HaulYard!\n\nLeave a rating: ${APP_URL}/buyer/requests`,
     });
   }
 });
@@ -867,7 +867,7 @@ app.post('/api/messages', writeLimiter, requireAuth, requireVerified, (req, res)
       const sender = data.accounts[req.userEmail];
       sendMail({
         to: otherEmail,
-        subject: `New message from ${sender?.name || "a SoilConnect user"}`,
+        subject: `New message from ${sender?.name || "a HaulYard user"}`,
         text: `${msg.text}\n\nReply: ${APP_URL}/messages`,
       });
     }
@@ -899,7 +899,7 @@ app.post('/api/feedback', writeLimiter, requireAuth, (req, res) => {
 
   sendMail({
     to: FEEDBACK_TO,
-    subject: `SoilConnect beta feedback from ${entry.fromName || req.userEmail}`,
+    subject: `HaulYard beta feedback from ${entry.fromName || req.userEmail}`,
     text: `From: ${entry.fromName} <${req.userEmail}>\nPage: ${page || 'n/a'}\nWhen: ${entry.createdAt}\n\n${message}`,
   });
 });
@@ -1023,7 +1023,7 @@ app.post('/api/chat', async (req, res) => {
     }
     const systemMessage = {
       role: 'system',
-      content: `You are a helpful AI assistant for SoilConnect, a marketplace platform that connects soil buyers, sellers, and haulers.`,
+      content: `You are a helpful AI assistant for HaulYard, a marketplace platform that connects soil buyers, sellers, and haulers.`,
     };
     const response = await openai.chat.completions.create({
       model: 'gpt-5',

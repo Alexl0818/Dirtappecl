@@ -39,7 +39,7 @@ const SignupScreen = () => {
         <div className="dashboard-header">
           <div>
             <h2 className="section-title">Sign Up</h2>
-            <p className="section-subtitle">Create your SoilConnect account.</p>
+            <p className="section-subtitle">Create your HaulYard account.</p>
           </div>
         </div>
 

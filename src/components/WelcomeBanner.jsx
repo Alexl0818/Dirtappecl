@@ -58,7 +58,7 @@ export default function WelcomeBanner() {
       >
         ×
       </button>
-      <div style={{ fontWeight: 600, marginBottom: 4 }}>👋 Welcome to the SoilConnect beta!</div>
+      <div style={{ fontWeight: 600, marginBottom: 4 }}>👋 Welcome to the HaulYard beta!</div>
       <div style={{ fontSize: 13, opacity: 0.9, lineHeight: 1.5 }}>
         Thanks for trying it early. Things may still be rough around the edges — if anything’s
         confusing or broken, your feedback genuinely shapes what we build next.

@@ -32,7 +32,7 @@ const WelcomeScreen = () => {
             textShadow: "0 2px 10px rgba(15,23,42,0.85)",
           }}
         >
-          SoilConnect
+          HaulYard
         </h1>
         <p
           style={{

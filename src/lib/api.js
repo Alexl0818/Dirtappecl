@@ -6,8 +6,8 @@
 //     when the frontend and API are served from the SAME address — our
 //     single-service web deploy — and also works in dev via the Vite proxy.
 //   - Set VITE_API_URL at build time to point at an absolute API address, e.g.
-//     VITE_API_URL=https://soilconnect.onrender.com
-//     Then requests go to https://soilconnect.onrender.com/api/... This is what
+//     VITE_API_URL=https://haulyard.onrender.com
+//     Then requests go to https://haulyard.onrender.com/api/... This is what
 //     a future native phone app build would use (it can't use a relative path).
 const API_BASE = (import.meta.env?.VITE_API_URL || "").replace(/\/+$/, "");
 

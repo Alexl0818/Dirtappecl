@@ -18,20 +18,20 @@ export default function TermsOfService() {
         <div className="dashboard-header">
           <div>
             <h2 className="section-title">Terms of Service</h2>
-            <p className="section-subtitle">SoilConnect (ECL Site Works LLC) · Updated {UPDATED}</p>
+            <p className="section-subtitle">HaulYard (ECL Site Works LLC) · Updated {UPDATED}</p>
           </div>
         </div>
 
         <GlassCard className="dashboard-card">
           <div className="card-description" style={{ lineHeight: 1.6 }}>
             <p>
-              By creating an account or using SoilConnect, you agree to these terms. SoilConnect is
+              By creating an account or using HaulYard, you agree to these terms. HaulYard is
               currently in <strong>beta</strong> and provided “as is” while we build and refine it.
             </p>
 
-            <Section title="What SoilConnect does (and doesn’t) do">
+            <Section title="What HaulYard does (and doesn’t) do">
               <p>
-                SoilConnect is a <strong>connection platform</strong>. We help buyers, sellers, and haulers
+                HaulYard is a <strong>connection platform</strong>. We help buyers, sellers, and haulers
                 find each other and communicate. We are <strong>not</strong> a party to any deal, and we do{" "}
                 <strong>not</strong> process payments for soil or hauling transactions — pricing, payment,
                 scheduling, delivery, and the actual material are arranged directly between users. You are
@@ -57,9 +57,9 @@ export default function TermsOfService() {
 
             <Section title="Subscriptions (future)">
               <p>
-                SoilConnect is free during the beta. In the future, posting beyond a monthly allowance
+                HaulYard is free during the beta. In the future, posting beyond a monthly allowance
                 (and hauler bidding) may require a paid subscription. We’ll make any pricing clear before it
-                applies to you. SoilConnect never takes a cut of your transactions.
+                applies to you. HaulYard never takes a cut of your transactions.
               </p>
             </Section>
 

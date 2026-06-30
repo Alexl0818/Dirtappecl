@@ -34,7 +34,7 @@ const LoginScreen = () => {
         <div className="dashboard-header">
           <div>
             <h2 className="section-title">Log In</h2>
-            <p className="section-subtitle">Welcome back to SoilConnect.</p>
+            <p className="section-subtitle">Welcome back to HaulYard.</p>
           </div>
         </div>
 

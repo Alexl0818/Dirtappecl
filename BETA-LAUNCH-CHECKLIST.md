@@ -1,4 +1,4 @@
-# 🚀 SoilConnect — Beta Launch Checklist
+# 🚀 HaulYard — Beta Launch Checklist
 
 > Print this and check items off as we go. Grouped by phase, in the order we'll tackle them.
 > ☐ = not started · ◐ = in progress · ☑ = done
