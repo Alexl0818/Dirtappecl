@@ -1,6 +1,20 @@
 # Session Changelog — Hardening & Geo Map
 
-## 🧑‍🤝‍🧑 Beta-launch prep — Phase 5 (legal, feedback, welcome) (latest)
+## 🛡️ Error monitoring (Sentry) — wired, off by default (latest)
+
+Added Sentry error monitoring for both ends, **completely inert unless a DSN is set**
+(app runs identically without it):
+- Backend: `instrument.js` (Sentry.init, imported before express in `server.js`) +
+  `Sentry.setupExpressErrorHandler(app)`, gated on `SENTRY_DSN`.
+- Frontend: `Sentry.init` in `src/index.jsx`, gated on build-time `VITE_SENTRY_DSN`.
+- `@sentry/node` + `@sentry/react` v10 added to dependencies; `.env.example` documents
+  both vars (same DSN value). `tracesSampleRate: 0` (error monitoring only, free-tier friendly).
+
+To turn on: create a free Sentry project, then set `SENTRY_DSN` + `VITE_SENTRY_DSN` in
+Render. Verified locally: with no DSN, server starts with no sentry line and the app
+renders clean (no console errors) — true no-op.
+
+## 🧑‍🤝‍🧑 Beta-launch prep — Phase 5 (legal, feedback, welcome)
 
 The "ready to invite people" layer:
 - **Privacy Policy** (`/privacy`) and **Terms of Service** (`/terms`) — plain-language

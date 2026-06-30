@@ -26,6 +26,8 @@
     "vite": "^5.0.0"
   },
   "dependencies": {
+    "@sentry/node": "^10.62.0",
+    "@sentry/react": "^10.62.0",
     "express": "^5.2.1",
     "leaflet": "^1.9.4",
     "nodemailer": "^9.0.1",

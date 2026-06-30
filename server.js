@@ -1,4 +1,6 @@
 import './load-env.js'; // must be first — loads .env before any env-reading module
+import './instrument.js'; // Sentry init — must come before express so it can instrument it
+import * as Sentry from '@sentry/node';
 import express from 'express';
 import crypto from 'crypto';
 import path from 'node:path';
@@ -1061,6 +1063,12 @@ if (SERVE_STATIC) {
   } else {
     console.warn(`SERVE_STATIC is on but ${DIST_DIR}/index.html is missing — run "npm run build" first.`);
   }
+}
+
+// Sentry error handler — must be registered after all routes. No-op unless
+// SENTRY_DSN was set (Sentry.init ran in instrument.js).
+if (process.env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
 }
 
 const PORT = Number(process.env.PORT) || 3001;
