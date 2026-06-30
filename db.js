@@ -41,6 +41,8 @@ const EMPTY = {
   messages: [], // { id, threadId, senderEmail, fromRole, text, createdAt }
   reviews: [], // { id, fromEmail, toEmail, rating, comment, oppId, createdAt }
   feedback: [], // { id, fromEmail, fromName, message, page, createdAt }
+  inviteCodes: [], // { code, label, maxUses (null=unlimited), uses, createdAt, createdBy }
+  settings: { inviteOnly: false }, // when true, signup requires a valid invite code
 };
 
 let data;

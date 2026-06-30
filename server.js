@@ -232,6 +232,28 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+// Invite codes (closed-beta gate). Codes are case-insensitive.
+function normCode(c) {
+  return String(c || '').trim().toUpperCase();
+}
+// Return the matching code object if it exists and still has uses left, else null.
+function findUsableInvite(code) {
+  const c = normCode(code);
+  if (!c) return null;
+  const hit = (data.inviteCodes || []).find((x) => normCode(x.code) === c);
+  if (!hit) return null;
+  if (hit.maxUses != null && (hit.uses || 0) >= hit.maxUses) return null; // used up
+  return hit;
+}
+// Generate a short, readable code (no easily-confused chars).
+function genInviteCode() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let out = '';
+  const bytes = crypto.randomBytes(8);
+  for (let i = 0; i < 8; i++) out += alphabet[bytes[i] % alphabet.length];
+  return out.slice(0, 4) + '-' + out.slice(4);
+}
+
 /* ------------------------------------------------------------------ *
  * Billing / subscriptions
  *
@@ -310,6 +332,18 @@ app.post('/api/auth/signup', authLimiter, (req, res) => {
   if (!password || password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters.' });
   if (data.accounts[cleanEmail]) return res.status(409).json({ error: 'An account with that email already exists.' });
 
+  // Invite-only beta: require a valid, not-used-up invite code.
+  let invite = null;
+  if (data.settings?.inviteOnly) {
+    invite = findUsableInvite(req.body?.inviteCode);
+    if (!invite) {
+      return res.status(403).json({
+        error: 'A valid invite code is required to join right now.',
+        code: 'invite_required',
+      });
+    }
+  }
+
   const verifyToken = crypto.randomBytes(24).toString('hex');
   const account = {
     name: name.trim(),
@@ -326,6 +360,11 @@ app.post('/api/auth/signup', authLimiter, (req, res) => {
     createdAt: new Date().toISOString(),
   };
   data.accounts[cleanEmail] = account;
+  if (invite) {
+    invite.uses = (invite.uses || 0) + 1;
+    invite.lastUsedBy = cleanEmail;
+    invite.lastUsedAt = account.createdAt;
+  }
   const token = crypto.randomUUID();
   data.sessions[token] = cleanEmail;
   save();
@@ -830,11 +869,14 @@ app.get('/api/admin/overview', requireAuth, requireAdmin, (req, res) => {
       requests: data.requests.filter((r) => r.buyerEmail === a.email).length,
     }))
     .sort(byNewest);
+  const inviteCodes = [...(data.inviteCodes || [])].sort(byNewest);
   res.json({
     listings,
     requests,
     opportunities,
     accounts,
+    inviteCodes,
+    settings: { inviteOnly: !!data.settings?.inviteOnly },
     counts: {
       listings: listings.length,
       requests: requests.length,
@@ -842,6 +884,55 @@ app.get('/api/admin/overview', requireAuth, requireAdmin, (req, res) => {
       accounts: accounts.length,
     },
   });
+});
+
+// Toggle the invite-only signup gate.
+app.post('/api/admin/settings', requireAuth, requireAdmin, (req, res) => {
+  if (!data.settings) data.settings = {};
+  if (req.body?.inviteOnly !== undefined) {
+    data.settings.inviteOnly = !!req.body.inviteOnly;
+  }
+  save();
+  res.json({ settings: { inviteOnly: !!data.settings.inviteOnly } });
+});
+
+// Create an invite code. Optional label + maxUses (null/0 = unlimited).
+app.post('/api/admin/invite-codes', requireAuth, requireAdmin, (req, res) => {
+  if (!data.inviteCodes) data.inviteCodes = [];
+  let code = normCode(req.body?.code);
+  if (code && (data.inviteCodes || []).some((x) => normCode(x.code) === code)) {
+    return res.status(409).json({ error: 'That code already exists.' });
+  }
+  if (!code) {
+    do {
+      code = genInviteCode();
+    } while ((data.inviteCodes || []).some((x) => normCode(x.code) === code));
+  }
+  const rawMax = Number(req.body?.maxUses);
+  const maxUses = Number.isFinite(rawMax) && rawMax > 0 ? Math.floor(rawMax) : null;
+  const entry = {
+    code,
+    label: String(req.body?.label || '').slice(0, 80),
+    maxUses,
+    uses: 0,
+    createdAt: new Date().toISOString(),
+    createdBy: req.userEmail,
+  };
+  data.inviteCodes.unshift(entry);
+  save();
+  res.json(entry);
+});
+
+// Delete an invite code (existing accounts are unaffected).
+app.delete('/api/admin/invite-codes/:code', requireAuth, requireAdmin, (req, res) => {
+  const c = normCode(req.params.code);
+  const before = (data.inviteCodes || []).length;
+  data.inviteCodes = (data.inviteCodes || []).filter((x) => normCode(x.code) !== c);
+  if (data.inviteCodes.length === before) {
+    return res.status(404).json({ error: 'No such code.' });
+  }
+  save();
+  res.json({ ok: true });
 });
 
 // Suspend / un-suspend an account. Suspended users can't log in and any live
@@ -1140,6 +1231,11 @@ app.post('/api/chat', async (req, res) => {
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
+});
+
+// Public, unauthenticated config the signup screen needs before login.
+app.get('/api/config', (req, res) => {
+  res.json({ inviteOnly: !!data.settings?.inviteOnly });
 });
 
 /* ------------------------------------------------------------------ *

@@ -1,9 +1,10 @@
 // src/components/SignupScreen.jsx
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GlassCard from "./GlassCard";
 import { useAuth } from "./AuthContext";
+import { api } from "../lib/api";
 
 const SignupScreen = () => {
   const navigate = useNavigate();
@@ -14,9 +15,25 @@ const SignupScreen = () => {
     email: "",
     password: "",
     company: "",
+    inviteCode: "",
   });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [inviteOnly, setInviteOnly] = useState(false);
+
+  // Closed-beta gate: ask the server whether an invite code is required.
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get("/config")
+      .then((c) => {
+        if (!cancelled) setInviteOnly(!!c?.inviteOnly);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const setField = (key) => (e) =>
     setForm((p) => ({ ...p, [key]: e.target.value }));
@@ -90,6 +107,23 @@ const SignupScreen = () => {
                 onChange={setField("company")}
               />
             </div>
+
+            {inviteOnly ? (
+              <div className="form-field">
+                <div className="field-label">Invite code</div>
+                <input
+                  className="field-input"
+                  placeholder="e.g. ABCD-2345"
+                  value={form.inviteCode}
+                  onChange={setField("inviteCode")}
+                  autoCapitalize="characters"
+                  onKeyDown={(e) => e.key === "Enter" && handleCreateAccount()}
+                />
+                <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>
+                  HaulYard is invite-only right now. Enter the code from your invite.
+                </div>
+              </div>
+            ) : null}
 
             <button
               className="primary-button full-width"

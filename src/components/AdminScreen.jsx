@@ -34,6 +34,9 @@ const AdminScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState(null);
+  const [newLabel, setNewLabel] = useState("");
+  const [newMax, setNewMax] = useState("");
+  const [copied, setCopied] = useState("");
 
   async function load() {
     setLoading(true);
@@ -69,6 +72,60 @@ const AdminScreen = () => {
         <BottomNav />
       </div>
     );
+  }
+
+  async function setInviteOnly(next) {
+    setBusyId("invite-toggle");
+    try {
+      await api.post("/admin/settings", { inviteOnly: next });
+      setData((d) => ({ ...d, settings: { ...d.settings, inviteOnly: next } }));
+    } catch (e) {
+      alert(e.message || "Couldn't update the setting.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function createCode() {
+    setBusyId("create-code");
+    try {
+      const max = parseInt(newMax, 10);
+      const entry = await api.post("/admin/invite-codes", {
+        label: newLabel.trim(),
+        maxUses: Number.isFinite(max) && max > 0 ? max : null,
+      });
+      setData((d) => ({ ...d, inviteCodes: [entry, ...(d.inviteCodes || [])] }));
+      setNewLabel("");
+      setNewMax("");
+    } catch (e) {
+      alert(e.message || "Couldn't create the code.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function deleteCode(code) {
+    if (!window.confirm(`Delete invite code ${code}? People who already joined keep their accounts.`))
+      return;
+    setBusyId(code);
+    try {
+      await api.del(`/admin/invite-codes/${encodeURIComponent(code)}`);
+      setData((d) => ({ ...d, inviteCodes: d.inviteCodes.filter((x) => x.code !== code) }));
+    } catch (e) {
+      alert(e.message || "Couldn't delete the code.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  function copyCode(code) {
+    try {
+      navigator.clipboard?.writeText(code);
+      setCopied(code);
+      setTimeout(() => setCopied(""), 1500);
+    } catch {
+      /* ignore */
+    }
   }
 
   async function toggleSuspend(acct) {
@@ -146,6 +203,129 @@ const AdminScreen = () => {
           {data.counts.listings} listings · {data.counts.requests} requests ·{" "}
           {data.counts.accounts} accounts
         </p>
+      ) : null}
+
+      {/* Access / invite-only */}
+      {data ? (
+        <GlassCard className="dashboard-card" style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>Invite-only signups</div>
+              <div style={{ fontSize: 12, opacity: 0.75, marginTop: 2 }}>
+                {data.settings?.inviteOnly
+                  ? "ON — new people need a code to join."
+                  : "OFF — anyone can sign up."}
+              </div>
+            </div>
+            <button
+              onClick={() => setInviteOnly(!data.settings?.inviteOnly)}
+              disabled={busyId === "invite-toggle"}
+              style={{
+                flexShrink: 0,
+                padding: "8px 14px",
+                borderRadius: 8,
+                border: "1px solid rgba(134,239,172,0.5)",
+                background: data.settings?.inviteOnly ? "rgba(6,78,59,0.8)" : "rgba(15,23,42,0.6)",
+                color: data.settings?.inviteOnly ? "#bbf7d0" : "#e2e8f0",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              {data.settings?.inviteOnly ? "Turn OFF" : "Turn ON"}
+            </button>
+          </div>
+
+          {/* Create code */}
+          <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <input
+              placeholder="Label (e.g. Joe at ACME)"
+              value={newLabel}
+              onChange={(e) => setNewLabel(e.target.value)}
+              style={codeInput(1)}
+            />
+            <input
+              placeholder="Max uses (blank = ∞)"
+              value={newMax}
+              onChange={(e) => setNewMax(e.target.value.replace(/[^0-9]/g, ""))}
+              inputMode="numeric"
+              style={codeInput(0, 130)}
+            />
+            <button
+              onClick={createCode}
+              disabled={busyId === "create-code"}
+              className="primary-button"
+              style={{ padding: "8px 14px", fontSize: 13 }}
+            >
+              {busyId === "create-code" ? "…" : "+ Code"}
+            </button>
+          </div>
+
+          {/* Code list */}
+          {data.inviteCodes && data.inviteCodes.length > 0 ? (
+            <div style={{ marginTop: 12 }}>
+              {data.inviteCodes.map((c) => (
+                <div
+                  key={c.code}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                    padding: "8px 0",
+                    borderTop: "1px solid rgba(148,163,184,0.15)",
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <span
+                      onClick={() => copyCode(c.code)}
+                      title="Click to copy"
+                      style={{
+                        fontFamily: "monospace",
+                        fontSize: 14,
+                        fontWeight: 700,
+                        letterSpacing: 1,
+                        cursor: "pointer",
+                        color: "#bbf7d0",
+                      }}
+                    >
+                      {c.code}
+                    </span>
+                    {copied === c.code ? (
+                      <span style={{ fontSize: 11, color: "#86efac", marginLeft: 6 }}>copied ✓</span>
+                    ) : null}
+                    <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2 }}>
+                      {c.label ? `${c.label} · ` : ""}
+                      used {c.uses || 0}
+                      {c.maxUses ? ` / ${c.maxUses}` : " (no limit)"}
+                      {c.maxUses && (c.uses || 0) >= c.maxUses ? " · used up" : ""}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => deleteCode(c.code)}
+                    disabled={busyId === c.code}
+                    style={{
+                      flexShrink: 0,
+                      padding: "5px 10px",
+                      borderRadius: 7,
+                      border: "1px solid rgba(248,113,113,0.4)",
+                      background: "transparent",
+                      color: "#fca5a5",
+                      fontSize: 12,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontSize: 12, opacity: 0.6, marginTop: 12, marginBottom: 0 }}>
+              No codes yet. Create one above, then share it with people you invite.
+            </p>
+          )}
+        </GlassCard>
       ) : null}
 
       {/* Listings */}
@@ -298,6 +478,17 @@ const badge = (fg, bg) => ({
   color: fg,
   background: bg,
   verticalAlign: "middle",
+});
+
+const codeInput = (grow, width) => ({
+  flex: grow ? "1 1 160px" : `0 0 ${width || 120}px`,
+  minWidth: 0,
+  padding: "8px 10px",
+  borderRadius: 8,
+  border: "1px solid rgba(148,163,184,0.6)",
+  background: "rgba(15,23,42,0.9)",
+  color: "white",
+  fontSize: 13,
 });
 
 const sectionTitle = { fontSize: 14, fontWeight: 600, marginBottom: 8 };
