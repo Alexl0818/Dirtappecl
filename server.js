@@ -254,6 +254,19 @@ function genInviteCode() {
   return out.slice(0, 4) + '-' + out.slice(4);
 }
 
+// Owner activity alerts: email the operator when someone signs up or posts, so
+// they can keep a pulse on the beta without watching the app. Turn off with
+// NOTIFY_OWNER=false. Skips actions taken by admins (no self-pings). Recipient
+// is ADMIN_NOTIFY_TO, falling back to FEEDBACK_TO, then the owner address.
+const NOTIFY_OWNER = process.env.NOTIFY_OWNER !== 'false';
+const OWNER_NOTIFY_TO =
+  process.env.ADMIN_NOTIFY_TO || process.env.FEEDBACK_TO || 'alex@eclsite.com';
+function notifyOwner(subject, text, actorEmail) {
+  if (!NOTIFY_OWNER) return;
+  if (actorEmail && isAdmin(actorEmail)) return; // don't ping the owner about their own actions
+  Promise.resolve(sendMail({ to: OWNER_NOTIFY_TO, subject, text })).catch(() => {});
+}
+
 /* ------------------------------------------------------------------ *
  * Billing / subscriptions
  *
@@ -371,6 +384,11 @@ app.post('/api/auth/signup', authLimiter, (req, res) => {
   res.json({ user: publicUser(account), token });
 
   if (REQUIRE_VERIFICATION) sendVerificationEmail(account);
+  notifyOwner(
+    `New HaulYard signup: ${account.name}`,
+    `${account.name} just signed up.\n\nEmail: ${account.email}\nCompany: ${account.company || '—'}\nWhen: ${account.createdAt}`,
+    account.email
+  );
 });
 
 // Sends (or re-sends) the email-verification link for an account.
@@ -531,6 +549,11 @@ app.post('/api/listings', writeLimiter, requireAuth, requireVerified, requireCan
   data.listings.unshift(listing);
   save();
   res.json(listing);
+  notifyOwner(
+    `New listing: ${listing.material || 'material'}`,
+    `${req.userEmail} posted a listing.\n\nMaterial: ${listing.material || '—'}\nQuantity: ${listing.quantity ?? '—'} ${listing.unit || ''}\nLocation: ${listing.location || '—'}\nPrice: ${listing.price || '—'}`,
+    req.userEmail
+  );
 });
 
 app.patch('/api/listings/:id', requireAuth, requireVerified, (req, res) => {
@@ -619,6 +642,12 @@ app.post('/api/requests', writeLimiter, requireAuth, requireVerified, requireCan
       text: `${buyer?.name || "A buyer"} requested ${request.quantity} ${request.unit} of ${request.material} (deliver to ${request.address || "—"}).\n\nReview it: ${APP_URL}/seller/listing`,
     });
   }
+
+  notifyOwner(
+    `New request: ${request.material || 'material'}`,
+    `${req.userEmail} posted a request.\n\nMaterial: ${request.material || '—'}\nQuantity: ${request.quantity ?? '—'} ${request.unit || ''}\nDeliver to: ${request.address || '—'}`,
+    req.userEmail
+  );
 });
 
 app.patch('/api/requests/:id', requireAuth, requireVerified, (req, res) => {
