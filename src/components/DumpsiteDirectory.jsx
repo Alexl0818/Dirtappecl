@@ -43,15 +43,24 @@ const DumpsiteDirectory = () => {
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto", padding: "16px 16px 90px" }}>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
         <h1 style={{ marginBottom: 4, fontSize: 22, fontWeight: 600 }}>Dump sites</h1>
-        <button
-          className="primary-button"
-          onClick={() => navigate("/dump/new")}
-          style={{ padding: "8px 14px", fontSize: 13 }}
-        >
-          + Add a site
-        </button>
+        <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+          <button
+            className="ghost-button"
+            onClick={() => navigate("/dump/map")}
+            style={{ padding: "8px 12px", fontSize: 13 }}
+          >
+            🗺️ Map
+          </button>
+          <button
+            className="primary-button"
+            onClick={() => navigate("/dump/new")}
+            style={{ padding: "8px 14px", fontSize: 13 }}
+          >
+            + Add
+          </button>
+        </div>
       </div>
       <p style={{ marginBottom: 14, opacity: 0.8, fontSize: 13 }}>
         Find a place to take dirt, fill, concrete, or debris near you.

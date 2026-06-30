@@ -39,6 +39,7 @@ import TermsOfService from "./components/TermsOfService";
 import FeedbackScreen from "./components/FeedbackScreen";
 import AdminScreen from "./components/AdminScreen";
 import DumpsiteDirectory from "./components/DumpsiteDirectory";
+import DumpsiteMapView from "./components/DumpsiteMapView";
 import NewDumpsite from "./components/NewDumpsite";
 import DumpsiteDetails from "./components/DumpsiteDetails";
 
@@ -165,6 +166,7 @@ function AppInner() {
 
       {/* Dumpsites */}
       <Route path="/dump" element={<ErrorBoundary><DumpsiteDirectory /></ErrorBoundary>} />
+      <Route path="/dump/map" element={<ErrorBoundary><DumpsiteMapView /></ErrorBoundary>} />
       <Route path="/dump/new" element={<ErrorBoundary><NewDumpsite /></ErrorBoundary>} />
       <Route path="/dump/edit/:id" element={<ErrorBoundary><NewDumpsite /></ErrorBoundary>} />
       <Route path="/dump/:id" element={<ErrorBoundary><DumpsiteDetails /></ErrorBoundary>} />
