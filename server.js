@@ -184,6 +184,10 @@ function requireAuth(req, res, next) {
   if (!email || !data.accounts[email]) {
     return res.status(401).json({ error: 'Not authenticated.' });
   }
+  // A suspended account's existing session is immediately dead.
+  if (data.accounts[email].suspended) {
+    return res.status(403).json({ error: 'This account has been suspended.', code: 'suspended' });
+  }
   req.userEmail = email;
   next();
 }
@@ -422,6 +426,9 @@ app.post('/api/auth/login', authLimiter, (req, res) => {
   const account = data.accounts[cleanEmail];
   if (!account || !verifyPassword(password, account.password)) {
     return res.status(401).json({ error: 'Email or password is incorrect.' });
+  }
+  if (account.suspended) {
+    return res.status(403).json({ error: 'This account has been suspended. Contact support.' });
   }
   // Transparently upgrade any legacy plaintext password to a hash on login.
   if (!account.password.startsWith('scrypt$')) {
@@ -810,17 +817,49 @@ app.get('/api/admin/overview', requireAuth, requireAdmin, (req, res) => {
   const listings = [...data.listings].sort(byNewest).map(withSeller);
   const requests = [...data.requests].sort(byNewest).map(withBuyer);
   const opportunities = [...data.opportunities].sort(byNewest);
+  const accounts = Object.values(data.accounts)
+    .map((a) => ({
+      email: a.email,
+      name: a.name || '',
+      company: a.company || '',
+      createdAt: a.createdAt,
+      verified: !!a.verified,
+      suspended: !!a.suspended,
+      isAdmin: isAdmin(a.email),
+      listings: data.listings.filter((l) => l.sellerEmail === a.email).length,
+      requests: data.requests.filter((r) => r.buyerEmail === a.email).length,
+    }))
+    .sort(byNewest);
   res.json({
     listings,
     requests,
     opportunities,
+    accounts,
     counts: {
       listings: listings.length,
       requests: requests.length,
       opportunities: opportunities.length,
-      accounts: Object.keys(data.accounts).length,
+      accounts: accounts.length,
     },
   });
+});
+
+// Suspend / un-suspend an account. Suspended users can't log in and any live
+// session is rejected. Guard rails: can't suspend yourself or another admin.
+app.post('/api/admin/suspend', requireAuth, requireAdmin, (req, res) => {
+  const target = String(req.body?.email || '').trim().toLowerCase();
+  const suspend = req.body?.suspended !== false; // default true
+  const account = data.accounts[target];
+  if (!account) return res.status(404).json({ error: 'No such account.' });
+  if (suspend && target === req.userEmail) {
+    return res.status(400).json({ error: "You can't suspend your own account." });
+  }
+  if (suspend && isAdmin(target)) {
+    return res.status(400).json({ error: "You can't suspend an admin account." });
+  }
+  account.suspended = suspend;
+  save();
+  res.json({ ok: true, email: target, suspended: suspend });
 });
 
 /* ------------------------------------------------------------------ *

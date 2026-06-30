@@ -71,6 +71,27 @@ const AdminScreen = () => {
     );
   }
 
+  async function toggleSuspend(acct) {
+    const next = !acct.suspended;
+    const verb = next ? "Suspend" : "Un-suspend";
+    if (!window.confirm(`${verb} ${acct.name || acct.email}? ${next ? "They won't be able to log in or post." : "They'll regain access."}`))
+      return;
+    setBusyId(acct.email);
+    try {
+      await api.post("/admin/suspend", { email: acct.email, suspended: next });
+      setData((d) => ({
+        ...d,
+        accounts: d.accounts.map((a) =>
+          a.email === acct.email ? { ...a, suspended: next } : a
+        ),
+      }));
+    } catch (e) {
+      alert(e.message || "Couldn't update that account.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function remove(kind, item) {
     const what =
       kind === "listing"
@@ -169,6 +190,22 @@ const AdminScreen = () => {
         ))
       )}
 
+      {/* Accounts */}
+      <h2 style={{ ...sectionTitle, marginTop: 20 }}>People ({data?.accounts?.length ?? 0})</h2>
+      {data && data.accounts.length === 0 ? (
+        <p style={empty}>No accounts.</p>
+      ) : (
+        data?.accounts.map((a) => (
+          <AccountRow
+            key={a.email}
+            acct={a}
+            isSelf={a.email === user?.email}
+            busy={busyId === a.email}
+            onToggle={() => toggleSuspend(a)}
+          />
+        ))
+      )}
+
       <BottomNav />
     </div>
   );
@@ -206,6 +243,62 @@ const PostRow = ({ title, sub, who, email, date, busy, onDelete }) => (
     </div>
   </GlassCard>
 );
+
+const AccountRow = ({ acct, isSelf, busy, onToggle }) => {
+  const canSuspend = !acct.isAdmin && !isSelf;
+  return (
+    <GlassCard className="dashboard-card" style={{ marginBottom: 10 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 600, fontSize: 14 }}>
+            {acct.name || acct.email}
+            {acct.isAdmin ? <span style={badge("#86efac", "#064e3b")}>admin</span> : null}
+            {acct.suspended ? <span style={badge("#fca5a5", "#450a0a")}>suspended</span> : null}
+          </div>
+          <div style={{ fontSize: 11, opacity: 0.65, marginTop: 4 }}>
+            {acct.email}
+            {acct.company ? ` · ${acct.company}` : ""}
+            {` · ${acct.listings} listings, ${acct.requests} requests`}
+          </div>
+        </div>
+        {canSuspend ? (
+          <button
+            onClick={onToggle}
+            disabled={busy}
+            style={{
+              flexShrink: 0,
+              padding: "7px 12px",
+              borderRadius: 8,
+              border: acct.suspended ? "1px solid rgba(134,239,172,0.5)" : "1px solid rgba(251,191,36,0.5)",
+              background: acct.suspended ? "rgba(6,78,59,0.7)" : "rgba(120,53,15,0.7)",
+              color: acct.suspended ? "#bbf7d0" : "#fde68a",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: busy ? "default" : "pointer",
+            }}
+          >
+            {busy ? "…" : acct.suspended ? "Un-suspend" : "Suspend"}
+          </button>
+        ) : (
+          <span style={{ flexShrink: 0, fontSize: 11, opacity: 0.5, paddingTop: 7 }}>
+            {isSelf ? "you" : "—"}
+          </span>
+        )}
+      </div>
+    </GlassCard>
+  );
+};
+
+const badge = (fg, bg) => ({
+  marginLeft: 6,
+  fontSize: 10,
+  fontWeight: 600,
+  padding: "1px 6px",
+  borderRadius: 10,
+  color: fg,
+  background: bg,
+  verticalAlign: "middle",
+});
 
 const sectionTitle = { fontSize: 14, fontWeight: 600, marginBottom: 8 };
 const empty = { fontSize: 13, opacity: 0.6, marginBottom: 12 };
