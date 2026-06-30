@@ -115,6 +115,7 @@ function verifyPassword(password, stored) {
 function publicUser(account) {
   if (!account) return null;
   const { password, verifyToken, resetToken, resetTokenExp, ...rest } = account;
+  if (isAdmin(rest.email)) rest.isAdmin = true;
   return rest;
 }
 
@@ -204,6 +205,25 @@ function requireVerified(req, res, next) {
       error: 'Please verify your email before doing that.',
       code: 'unverified',
     });
+  }
+  next();
+}
+
+// Admin accounts get full moderation power (delete ANY post, not just their own)
+// and see the /admin overview. Comma-separated emails; defaults to the owner.
+const ADMIN_EMAILS = new Set(
+  (process.env.ADMIN_EMAILS || 'alex@eclsite.com')
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean)
+);
+function isAdmin(email) {
+  return !!email && ADMIN_EMAILS.has(String(email).toLowerCase());
+}
+// Gate admin-only routes (use after requireAuth).
+function requireAdmin(req, res, next) {
+  if (!isAdmin(req.userEmail)) {
+    return res.status(403).json({ error: 'Admins only.' });
   }
   next();
 }
@@ -495,7 +515,11 @@ app.patch('/api/listings/:id', requireAuth, requireVerified, (req, res) => {
 app.delete('/api/listings/:id', requireAuth, requireVerified, (req, res) => {
   const idx = data.listings.findIndex((x) => String(x.id) === String(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'Listing not found.' });
-  if (data.listings[idx].sellerEmail && data.listings[idx].sellerEmail !== req.userEmail) {
+  if (
+    data.listings[idx].sellerEmail &&
+    data.listings[idx].sellerEmail !== req.userEmail &&
+    !isAdmin(req.userEmail)
+  ) {
     return res.status(403).json({ error: 'Not your listing.' });
   }
   data.listings.splice(idx, 1);
@@ -579,7 +603,11 @@ app.patch('/api/requests/:id', requireAuth, requireVerified, (req, res) => {
 app.delete('/api/requests/:id', requireAuth, requireVerified, (req, res) => {
   const idx = data.requests.findIndex((x) => String(x.id) === String(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'Request not found.' });
-  if (data.requests[idx].buyerEmail && data.requests[idx].buyerEmail !== req.userEmail) {
+  if (
+    data.requests[idx].buyerEmail &&
+    data.requests[idx].buyerEmail !== req.userEmail &&
+    !isAdmin(req.userEmail)
+  ) {
     return res.status(403).json({ error: 'Not your request.' });
   }
   data.requests.splice(idx, 1);
@@ -742,7 +770,11 @@ app.post('/api/bids', writeLimiter, requireAuth, requireVerified, requireHaulerP
 app.delete('/api/opportunities/:id', requireAuth, requireVerified, (req, res) => {
   const idx = data.opportunities.findIndex((x) => String(x.id) === String(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'Opportunity not found.' });
-  if (data.opportunities[idx].sellerEmail && data.opportunities[idx].sellerEmail !== req.userEmail) {
+  if (
+    data.opportunities[idx].sellerEmail &&
+    data.opportunities[idx].sellerEmail !== req.userEmail &&
+    !isAdmin(req.userEmail)
+  ) {
     return res.status(403).json({ error: 'Not your opportunity.' });
   }
   data.opportunities.splice(idx, 1);
@@ -753,12 +785,42 @@ app.delete('/api/opportunities/:id', requireAuth, requireVerified, (req, res) =>
 app.delete('/api/bids/:id', requireAuth, requireVerified, (req, res) => {
   const idx = data.bids.findIndex((x) => String(x.id) === String(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'Bid not found.' });
-  if (data.bids[idx].haulerEmail && data.bids[idx].haulerEmail !== req.userEmail) {
+  if (
+    data.bids[idx].haulerEmail &&
+    data.bids[idx].haulerEmail !== req.userEmail &&
+    !isAdmin(req.userEmail)
+  ) {
     return res.status(403).json({ error: 'Not your bid.' });
   }
   data.bids.splice(idx, 1);
   save();
   res.json({ ok: true });
+});
+
+/* ------------------------------------------------------------------ *
+ * Admin moderation
+ *
+ * Admins (ADMIN_EMAILS) get a full view of every post for cleanup. Deleting is
+ * done through the normal DELETE endpoints, which let admins bypass the
+ * owner-only check. Newest first so stale/spam posts are easy to spot.
+ * ------------------------------------------------------------------ */
+app.get('/api/admin/overview', requireAuth, requireAdmin, (req, res) => {
+  const byNewest = (a, b) =>
+    String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+  const listings = [...data.listings].sort(byNewest).map(withSeller);
+  const requests = [...data.requests].sort(byNewest).map(withBuyer);
+  const opportunities = [...data.opportunities].sort(byNewest);
+  res.json({
+    listings,
+    requests,
+    opportunities,
+    counts: {
+      listings: listings.length,
+      requests: requests.length,
+      opportunities: opportunities.length,
+      accounts: Object.keys(data.accounts).length,
+    },
+  });
 });
 
 /* ------------------------------------------------------------------ *

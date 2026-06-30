@@ -37,6 +37,7 @@ import ResetPassword from "./components/ResetPassword";
 import PrivacyPolicy from "./components/PrivacyPolicy";
 import TermsOfService from "./components/TermsOfService";
 import FeedbackScreen from "./components/FeedbackScreen";
+import AdminScreen from "./components/AdminScreen";
 
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -161,6 +162,7 @@ function AppInner() {
 
       {/* Profile + Messages */}
       <Route path="/profile" element={<ProfileScreen />} />
+      <Route path="/admin" element={<ErrorBoundary><AdminScreen /></ErrorBoundary>} />
       <Route path="/feedback" element={<FeedbackScreen />} />
       <Route path="/messages" element={<MessagesInbox />} />
       <Route path="/messages/thread" element={<MessageThread />} />

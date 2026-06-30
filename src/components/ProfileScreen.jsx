@@ -118,6 +118,15 @@ const ProfileScreen = () => {
         <button className="primary-button full-width" onClick={handleSave}>
           {saved ? "Saved ✓" : "Save changes"}
         </button>
+        {user?.isAdmin ? (
+          <button
+            className="ghost-button"
+            onClick={() => navigate("/admin")}
+            style={{ borderColor: "#86efac", color: "#bbf7d0" }}
+          >
+            🛡️ Manage posts (admin)
+          </button>
+        ) : null}
         <button
           className="ghost-button"
           onClick={() => navigate("/feedback", { state: { from: "/profile" } })}
