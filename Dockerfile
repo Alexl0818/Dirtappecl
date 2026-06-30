@@ -1,4 +1,4 @@
-# SoilConnect — single-service container. Builds the React frontend and serves
+# HaulYard — single-service container. Builds the React frontend and serves
 # it together with the Express API from one process on one port.
 
 FROM node:20-alpine

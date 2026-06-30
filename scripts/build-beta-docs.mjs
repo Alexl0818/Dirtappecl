@@ -86,7 +86,7 @@ function titleBlock(title, subtitle) {
     }),
     new Paragraph({
       spacing: { after: 200 },
-      children: [new TextRun({ text: "Updated 2026-06-26 · SoilConnect", color: GREY, italics: true, size: 18 })],
+      children: [new TextRun({ text: "Updated 2026-06-26 · HaulYard", color: GREY, italics: true, size: 18 })],
     }),
   ];
 }
@@ -111,7 +111,7 @@ function docShell(children) {
           children: [new Paragraph({
             alignment: AlignmentType.CENTER,
             children: [
-              new TextRun({ text: "SoilConnect — Beta Launch   ·   Page ", color: GREY, size: 16 }),
+              new TextRun({ text: "HaulYard — Beta Launch   ·   Page ", color: GREY, size: 16 }),
               new TextRun({ children: [PageNumber.CURRENT], color: GREY, size: 16 }),
             ],
           })],
@@ -315,7 +315,7 @@ function buildRoadmap() {
           children: [new Paragraph({
             alignment: AlignmentType.CENTER,
             children: [
-              new TextRun({ text: "SoilConnect — Beta Launch   ·   Page ", color: GREY, size: 16 }),
+              new TextRun({ text: "HaulYard — Beta Launch   ·   Page ", color: GREY, size: 16 }),
               new TextRun({ children: [PageNumber.CURRENT], color: GREY, size: 16 }),
             ],
           })],
@@ -336,6 +336,6 @@ async function write(doc, name) {
   console.log("wrote", p);
 }
 
-await write(buildChecklist(), "SoilConnect-Beta-Checklist.docx");
-await write(buildRoadmap(), "SoilConnect-Beta-Roadmap.docx");
+await write(buildChecklist(), "HaulYard-Beta-Checklist.docx");
+await write(buildRoadmap(), "HaulYard-Beta-Roadmap.docx");
 console.log("done");

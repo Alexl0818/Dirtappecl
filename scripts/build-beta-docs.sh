@@ -28,8 +28,8 @@ if [ -x "$CHROME" ]; then
   PROF="$(mktemp -d)"
   for name in beta-checklist beta-roadmap; do
     case "$name" in
-      beta-checklist) out="SoilConnect-Beta-Checklist.pdf" ;;
-      beta-roadmap)   out="SoilConnect-Beta-Roadmap.pdf" ;;
+      beta-checklist) out="HaulYard-Beta-Checklist.pdf" ;;
+      beta-roadmap)   out="HaulYard-Beta-Roadmap.pdf" ;;
     esac
     "$CHROME" --headless --disable-gpu --no-pdf-header-footer \
       --user-data-dir="$PROF" \
